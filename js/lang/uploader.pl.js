@@ -12,6 +12,7 @@ BOOKLET_UPLOADER_LOCALE = {
     files_counter_with_limit: 'Przesłano <b>%files_number%</b> z <b>%files_number_limit%</b> plików',
     invalid_file_type: 'Nieprawidłowy format pliku',
     max_file_size_exceeded: 'Zbyt duży rozmiar pliku',
+    min_file_size_exceeded: 'Zbyt mały rozmiar pliku',
     upload_error: 'Błąd podczas wysyłania',
     upload_abort: 'Wysyłanie przerwane',
 };

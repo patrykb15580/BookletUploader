@@ -4,6 +4,7 @@ var booklet_uploader = new function() {
         endpoint: null,
         max_files: null,
         max_size: null,
+        min_size: null,
         file_types: '*',
         multiple: false,
         onFileUploadDone: function(file) {},
@@ -191,6 +192,15 @@ var booklet_uploader = new function() {
                             return false;
                         }
 
+                        if (this.validators.isMinSizeExceeded()) {
+                            var error_text = booklet_uploader.locale.min_file_size_exceeded;
+
+                            this.element.find('.file-details').append('<div class="file-error-text">' + error_text + '</div>');
+                            this.errors.push(error_text);
+
+                            return false;
+                        }
+
                         return true;
                     },
                     validators: {
@@ -214,6 +224,9 @@ var booklet_uploader = new function() {
                         },
                         isMaxSizeExceeded: function() {
                             return (dialog.options.max_size !== null && file.size > dialog.options.max_size) ? true : false;
+                        },
+                        isMinSizeExceeded: function() {
+                            return (dialog.options.min_size == null || file.size >= dialog.options.min_size) ? false : true;
                         },
                     },
                     showErrors: function() {
