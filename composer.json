@@ -16,6 +16,7 @@
         }
     ],
     "require": {
+        "boooklet/framework": "dev-master",
         "boooklet/tester": "dev-master"
     },
     "autoload": {
