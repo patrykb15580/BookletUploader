@@ -1,0 +1,405 @@
+#booklet-uploader-files-picker {
+    display: none;
+}
+
+#booklet-uploader-dialog {
+    display: block;
+    background-color: rgba(0, 0, 0, 0.8);
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    z-index: 100;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'OpenSans';
+}
+
+#booklet-uploader-dialog * {
+    box-sizing: border-box;
+}
+
+#booklet-uploader-dialog .dialog {
+    display: flex;
+    background-color: #f3f1f2;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    padding: 0px;
+    border: 1px solid #cecece;
+    transform: translate(-50%, -50%);
+}
+
+#booklet-uploader-dialog .dialog .dialog-header {
+    display: flex;
+    background-color: #ffffff;
+    height: 80px;
+    flex: 0 0 80px;
+    align-items: center;
+    justify-content: center;
+    font-family: 'OpenSans Bold';
+    font-size: 20px;
+    padding: 15px;
+    border-bottom: 1px solid #cecece;
+    overflow: hidden;
+}
+
+#booklet-uploader-dialog .dialog .dialog-content {
+    display: flex;
+    flex-direction: column;
+    padding: 15px 15px;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+#booklet-uploader-dialog .dialog .dialog-footer {
+    display: flex;
+    background-color: #ffffff;
+    height: 70px;
+    flex: 0 0 70px;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    border-top: 1px solid #cecece;
+    overflow: hidden;
+}
+
+#booklet-uploader-dialog .dialog .dialog-footer .files-counter {
+    display: block;
+    font-size: 14px;
+    color: #aeaeae;
+}
+
+#booklet-uploader-dialog .dialog .dialog-footer .close-dialog {
+    display: block;
+    background-color: #d80e24;
+    font-family: 'OpenSans Bold';
+    font-size: 14px;
+    font-weight: 300;
+    text-align: center;
+    text-decoration: none;
+    color: #FFFFFF;
+    margin: 0px 0px 0px auto;
+    padding: 6px 30px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#booklet-uploader-dialog .dialog .dialog-footer .close-dialog:hover {
+    background-color: #c00c21;
+}
+
+/* Drop area */
+#booklet-uploader-dialog .dialog .drop-area {
+    display: flex;
+    background-color: transparent;
+    position: relative;
+    width: 100%;
+    height: 120px;
+    flex: 0 0 120px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin: 0px 0px 30px 0px;
+    padding: 0px;
+    border: none;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+#booklet-uploader-dialog .dialog .drop-area .text {
+    display: none;
+}
+
+#booklet-uploader-dialog .dialog .drop-area .select-files {
+    display: block;
+    background-color: #d80e24;
+    width: 100%;
+    max-width: 320px;
+    font-family: 'OpenSans Bold';
+    font-size: 14px;
+    font-weight: 300;
+    text-align: center;
+    text-decoration: none;
+    color: #FFFFFF;
+    margin: 0px;
+    padding: 12px 0px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#booklet-uploader-dialog .dialog .drop-area .select-files:hover {
+    background-color: #c00c21;
+}
+
+#booklet-uploader-dialog .dialog .drop-area .files-size-info {
+    display: block;
+    line-height: 1.6em;
+    font-size: 10px;
+    text-align: center;
+    color: #aeaeae;
+    margin-top: 15px;
+}
+
+
+/* Files list */
+#booklet-uploader-dialog .dialog .files-list {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    align-content: flex-start;
+    list-style-type: none;
+    margin: 0px -15px 0px -15px;
+    padding: 0px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#booklet-uploader-dialog .dialog .files-list li {
+    display: block;
+    max-width: 100%;
+    height: 62px;
+    flex: 0 0 100%;
+    margin: 0px 0px 30px 0px;
+    padding: 0px 15px;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file {
+    display: flex;
+    background-color: #ffffff;
+    position: relative;
+    width: 100%;
+    align-items: center;
+    padding: 0px 15px 0px 0px;
+    border: 1px solid #cecece;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file:last-child {
+    margin-bottom: 0px;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .file-details {
+    padding: 0px 15px;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .file-thumb {
+    display: block;
+    position: relative;
+    width: 60px;
+    height: 60px;
+    align-items: center;
+    overflow: hidden;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .file-details {
+    max-width: calc(100% - 60px);
+    flex: 1 1 auto;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .file-details .file-name {
+    display: block;
+    line-height: 1.6em;
+    font-size: 16px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .file-details .file-size {
+    display: block;
+    font-size: 10px;
+    color: #cecece;
+    margin-top: 0px;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .file-details .file-error-text {
+    display: block;
+    font-size: 10px;
+    color: #d80e24;
+    margin-top: 2px;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .upload-progress {
+    background-color: #cecece;
+    width: 30%;
+    height: 16px;
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .upload-progress .progress {
+    display: block;
+    background-color: #d80e24;
+    width: 0px;
+    height: 16px;
+    border: none;
+    border-radius: 8px;
+    transition: width .1s;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .upload-status {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    font-size: 30px;
+    transform: translateY(-50%);
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .upload-status.success {
+    color: #53be31;
+}
+
+#booklet-uploader-dialog .dialog .files-list .file .upload-status.error {
+    color: #d80e24;
+}
+
+
+
+
+
+
+@media only screen and (min-width: 576px) {
+    #booklet-uploader-dialog .dialog .drop-area .files-size-info {
+        margin-top: 10px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-name {
+        font-size: 18px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-size {
+        font-size: 12px;
+        margin-top: 6px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-error-text {
+        font-size: 11px;
+        margin-top: 6px;
+    }
+
+    #booklet-uploader-dialog .dialog .dialog-footer .files-counter {
+        font-size: 16px;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+    #booklet-uploader-dialog .dialog .drop-area {
+        height: 200px;
+        flex: 0 0 200px;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area .text {
+        line-height: 1.6em;
+        font-size: 18px;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area .files-size-info {
+        font-size: 14px;
+        margin-top: 20px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list li {
+        max-width: 50%;
+        height: 82px;
+        flex: 0 0 50%;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-thumb {
+        width: 80px;
+        height: 80px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details {
+        max-width: calc(100% - 80px);
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-name {
+        font-size: 16px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-size {
+        font-size: 12px;
+        margin-top: 0px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-error-text {
+        font-size: 11px;
+        margin-top: 4px;
+    }
+}
+
+@media only screen and (min-width: 992px) {
+    #booklet-uploader-dialog .dialog {
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area {
+        padding: 15px;
+        border: 2px dashed #cecece;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area.drag-in {
+        background-color: #feefb3;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area .text {
+        line-height: 1.6em;
+        font-size: 18px;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area .files-size-info {
+        font-size: 14px;
+        margin-top: 20px;
+    }
+
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-name {
+        font-size: 18px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-error-text {
+        font-size: 11px;
+        margin-top: 6px;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+    #booklet-uploader-dialog .dialog {
+        max-width: 1170px;
+        max-height: 90vh;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area {
+        height: 240px;
+        flex: 0 0 240px;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area .text {
+        line-height: 1.6em;
+        font-size: 18px;
+    }
+
+    #booklet-uploader-dialog .dialog .drop-area .files-size-info {
+        font-size: 14px;
+        margin-top: 20px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list li {
+        max-width: 33.3333333333%;
+        flex: 0 0 33.3333333333%;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-name {
+        font-size: 18px;
+    }
+
+    #booklet-uploader-dialog .dialog .files-list .file .file-details .file-error-text {
+        font-size: 11px;
+        margin-top: 6px;
+    }
+}
