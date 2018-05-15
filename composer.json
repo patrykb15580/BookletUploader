@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "boooklet/tester": "dev-master",
+        "boooklet/tester": "dev-master"
     },
     "autoload": {
         "classmap": [
