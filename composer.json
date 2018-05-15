@@ -1,0 +1,29 @@
+{
+    "name": "patrykb15580/BookletUploader",
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "boooklet/framework",
+                "version": "dev-master",
+                "type": "package",
+                "source": {
+                    "url": "https://github.com/patrykb15580/BookletUploader.git",
+                    "type": "vcs",
+                    "reference": "master"
+                }
+            }
+        }
+    ],
+    "require": {
+        "boooklet/tester": "dev-master",
+    },
+    "autoload": {
+        "classmap": [
+            "src"
+        ],
+        "files": [
+            "src/global_functions.php"
+        ]
+    }
+}
