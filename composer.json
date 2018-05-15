@@ -22,9 +22,6 @@
     "autoload": {
         "classmap": [
             "src"
-        ],
-        "files": [
-            "src/global_functions.php"
         ]
     }
 }
