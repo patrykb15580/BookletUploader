@@ -35,13 +35,14 @@ class FTPStorage
         $directory = ltrim($directory, '/');
         $directory = rtrim($directory, '/');
 
-        $current_path = '/';
         foreach (explode('/', $directory) as $dir_name) {
-            if ($this->dir_exists($dir_name) || ftp_mkdir($this->connection, $dir_name)) {
-                ftp_chdir($this->connection, $dir_name);
-            } else {
+            if (!$this->dir_exists($dir_name) && !ftp_mkdir($this->connection, $dir_name)) {
+                ftp_chdir($this->connection, $current_dir);
+
                 return false;
             }
+
+            ftp_chdir($this->connection, $dir_name);
         }
 
         ftp_chdir($this->connection, $current_dir);

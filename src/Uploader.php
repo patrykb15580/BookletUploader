@@ -6,25 +6,19 @@ use Config;
 
 class Uploader
 {
-    private $source;
-    private $destination;
     private $storage;
 
-    function __construct($source, $destination, $storage = 'local')
+    function __construct($storage = 'local')
     {
-        $this->source = $source;
-        $this->destination = $destination;
-        $this->storage = $storage;
+        $this->storage = $this->getStorage($storage);
     }
 
-    public function upload()
+    public function upload($source, $destination)
     {
-        $storage = $this->getStorage();
-
-        return $storage->save($this->source, $this->destination);
+        return $this->storage->save($source, $destination) ?? false;
     }
 
-    private function getStorage()
+    private function getStorage($type)
     {
         return new FTPStorage(Config::get('booklet_uploader_ftp_ip'), Config::get('booklet_uploader_ftp_login'), Config::get('booklet_uploader_ftp_password'));
     }
