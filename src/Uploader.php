@@ -9,10 +9,8 @@ class Uploader
     private $source;
     private $destination;
     private $storage;
-    private $destination;
 
-
-    function __construct($source, $destination, $storage)
+    function __construct($source, $destination, $storage = 'local')
     {
         $this->source = $source;
         $this->destination = $destination;

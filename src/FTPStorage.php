@@ -8,7 +8,7 @@ class FTPStorage
 
     function __construct($ip, $login, $password)
     {
-        $this->connection = ftp_connect($ip, $login, $password);
+        $this->connection = ftp_connect($ip);
         $this->login = ftp_login($this->connection, $login, $password);
     }
 
@@ -31,7 +31,12 @@ class FTPStorage
     {
         ftp_chdir($this->connection, '/');
 
-        foreach (explode('/', $directory) as $part) {
+        $directory = ltrim($directory, '/');
+        $directory = rtrim($directory, '/');
+
+        $parts = explode('/', $directory);
+
+        foreach ($parts as $part) {
             if (!@ftp_chdir($this->connection, $part)) {
                 ftp_mkdir($this->connection, $part);
                 ftp_chdir($this->connection, $part);
