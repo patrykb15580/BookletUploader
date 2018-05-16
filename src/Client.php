@@ -18,6 +18,16 @@ class Client
         return $this->storage->save($source, $destination) ?? false;
     }
 
+    public function download($source, $destination)
+    {
+        return $this->storage->download($source, $destination);
+    }
+
+    public function file_get_contents($source)
+    {
+        return $this->storage->file_get_contents($source);
+    }
+
     private function getStorage($type)
     {
         return new FTPStorage(Config::get('booklet_uploader_ftp_ip'), Config::get('booklet_uploader_ftp_login'), Config::get('booklet_uploader_ftp_password'));
