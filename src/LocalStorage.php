@@ -9,7 +9,7 @@ class LocalStorage
 
         if (!$this->exists($dir_path) && !$this->mkdir($dir_path)) { return false; }
 
-        return move_uploaded_file($source, ltrim($destination, '/'));
+        return ($this->exists($destination)) ? false : move_uploaded_file($source, ltrim($destination, '/'));
     }
 
     public function file_get_contents($source)

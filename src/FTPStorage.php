@@ -20,7 +20,7 @@ class FTPStorage
 
         if (!$this->exists($directory) && !$this->mkdir($directory)) { return false; }
 
-        $success = ftp_put($this->connection, $destination, $source, FTP_BINARY);
+        $success = ($this->exists($destination)) ? false : ftp_put($this->connection, $destination, $source, FTP_BINARY);
 
         ftp_close($this->connection);
 
