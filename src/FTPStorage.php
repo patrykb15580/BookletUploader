@@ -27,17 +27,6 @@ class FTPStorage
         return $success;
     }
 
-    public function download($source, $destination)
-    {
-        ftp_chdir($this->connection, '/');
-
-        $file = ftp_get($this->connection, $destination , $source, FTP_BINARY);
-
-        ftp_close($this->connection);
-
-        return $file;
-    }
-
     public function file_get_contents($source)
     {
         ftp_chdir($this->connection, '/');
@@ -75,25 +64,12 @@ class FTPStorage
         return true;
     }
 
-    public function file_exists($file_path)
-    {
-        if ($this->is_dir($file_path)) {
-            if (!@ftp_chdir($file_path)) {
-                return false;
-            }
-
-            return true;
-        } else {
-            return in_array($file_path, ftp_nlist($this->connection, dirname($file_path)));
-        }
-    }
-
-    private function is_dir($dir)
+    private function is_dir($path)
     {
         $current_dir = ftp_pwd($this->connection);
         ftp_chdir($this->connection, '/');
 
-        if (!@ftp_chdir($this->connection, $dir)) {
+        if (!@ftp_chdir($this->connection, $path)) {
 
             return false;
         }
@@ -127,15 +103,5 @@ class FTPStorage
         ftp_chdir($this->connection, $current_dir);
 
         return true;
-    }
-
-    private function dir_exists($path)
-    {
-        $current_dir = ftp_pwd($this->connection);
-        $exists = (@ftp_chdir($this->connection, $path)) ? true : false;
-
-        ftp_chdir($this->connection, $current_dir);
-
-        return $exists;
     }
 }
