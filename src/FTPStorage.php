@@ -16,9 +16,9 @@ class FTPStorage
     {
         $directory = dirname($destination . '/');
 
-        if (!@ftp_chdir($directory) && !$this->mkdir($directory)) { return false; }
-
         ftp_chdir($this->connection, '/');
+
+        if (!$this->dir_exists($directory) && !$this->mkdir($directory)) { return false; }
 
         $success = ftp_put($this->connection, $destination, $source, FTP_BINARY);
 
@@ -29,22 +29,33 @@ class FTPStorage
 
     private function mkdir($directory)
     {
+        $current_dir = ftp_pwd($this->connection);
         ftp_chdir($this->connection, '/');
 
         $directory = ltrim($directory, '/');
         $directory = rtrim($directory, '/');
 
-        $parts = explode('/', $directory);
-
-        foreach ($parts as $part) {
-            if (!@ftp_chdir($this->connection, $part)) {
-                ftp_mkdir($this->connection, $part);
-                ftp_chdir($this->connection, $part);
+        $current_path = '/';
+        foreach (explode('/', $directory) as $dir_name) {
+            if ($this->dir_exists($dir_name) || ftp_mkdir($this->connection, $dir_name)) {
+                ftp_chdir($this->connection, $dir_name);
+            } else {
+                return false;
             }
         }
 
-        ftp_chdir($this->connection, '/');
+        ftp_chdir($this->connection, $current_dir);
 
         return true;
+    }
+
+    private function dir_exists($path)
+    {
+        $current_dir = ftp_pwd($this->connection);
+        $exists = (@ftp_chdir($this->connection, $path)) ? true : false;
+
+        ftp_chdir($this->connection, $current_dir);
+
+        return $exists;
     }
 }
