@@ -4,7 +4,7 @@ namespace Booklet\Uploader;
 use FilesUntils;
 use Config;
 
-class Uploader
+class Client
 {
     private $storage;
 
