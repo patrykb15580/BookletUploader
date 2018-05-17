@@ -91,8 +91,7 @@ class FTPStorage
         foreach (explode('/', $directory) as $name) {
             $path .= '/' . $name;
 
-            if (!$this->exists($path) && !ftp_mkdir($this->connection, $name)) {
-                ftp_chdir($this->connection, $current_dir);
+            if (!$this->exists($path) && !ftp_mkdir($this->connection, $path)) {
 
                 return false;
             }
