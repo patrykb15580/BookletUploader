@@ -1,5 +1,4 @@
 var booklet_uploader = new function() {
-    this.locale = BOOKLET_UPLOADER_LOCALE;
     this.defaults = {
         endpoint: null,
         max_files: null,
@@ -27,7 +26,7 @@ var booklet_uploader = new function() {
                 input: $('<input id="booklet-uploader-files-picker" class="booklet-uploader-files-picker" type="file" />'),
                 actions: {
                     select_files: $('<label class="select-files" for="booklet-uploader-files-picker">' + this.locale.select_files_button_single_file + '</label>'),
-                    close_dialog: $('<button class="close-dialog">' + this.locale.dialog.close_button + '</button>'),
+                    close_dialog: $('<button class="close-dialog">' + this.locale.close_button + '</button>'),
                 },
                 drop_area: {
                     container: $('<div class="drop-area"></div>'),
@@ -38,7 +37,7 @@ var booklet_uploader = new function() {
                 dialog: {
                     container: $('<div id="booklet-uploader-dialog"></div>'),
                     dialog: $('<div class="dialog"></div>'),
-                    header: $('<div class="dialog-header">' + this.locale.dialog.header_text + '</div>'),
+                    header: $('<div class="dialog-header">' + this.locale.header_text + '</div>'),
                     content: $('<div class="dialog-content"></div>'),
                     footer: $('<div class="dialog-footer"></div>'),
                 },
@@ -160,7 +159,7 @@ var booklet_uploader = new function() {
                     name: file_data.name,
                     size: file_data.size,
                     type: file_data.type,
-                    uploaded: false,
+                    uploaded: true,
                     file_info: null,
                     errors: [],
                     element: $('<li>' +
@@ -345,5 +344,26 @@ var booklet_uploader = new function() {
         dialog.options.onDialogOpen();
 
         return dialog;
-    }
+    };
+
+    var default_locale = {
+        header_text: 'Select files to upload',
+        close_button: 'Done',
+        drop_area_text_single_file: 'Drag and drop file here<br /> or',
+        drop_area_text_multiple_files: 'Drag and drop files here<br /> or',
+        select_files_button_single_file: 'Select file',
+        select_files_button_multiple_files: 'Select files',
+        max_file_size_info: 'Max size of uploaded file is <b>%max_file_size%</b>',
+        files_counter: 'Uploaded <b>%files_number%</b> files',
+        files_counter_with_limit: 'Uploaded <b>%files_number%</b> from <b>%files_number_limit%</b> files',
+        invalid_file_type: 'Invalid file type',
+        max_file_size_exceeded: 'Max file size limit exceeded',
+        min_file_size_exceeded: 'Min file size limit exceeded',
+        upload_error: 'Something went wrong',
+        upload_abort: 'Upload canceled'
+    };
+
+    var custom_locale = (typeof BOOKLET_UPLOADER_LOCALE === 'undefined') ? {} : BOOKLET_UPLOADER_LOCALE;
+
+    this.locale = $.extend(default_locale, custom_locale);
 };

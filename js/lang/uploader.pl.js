@@ -1,8 +1,6 @@
 BOOKLET_UPLOADER_LOCALE = {
-    dialog: {
-        header_text: 'Wybierz pliki do przesłania',
-        close_button: 'Zakończ',
-    },
+    header_text: 'Wybierz pliki do przesłania',
+    close_button: 'Zakończ',
     drop_area_text_single_file: 'Przeciągnij i upuść tutaj plik<br /> lub',
     drop_area_text_multiple_files: 'Przeciągnij i upuść tutaj pliki<br /> lub',
     select_files_button_single_file: 'Kliknij aby wybrać plik',
