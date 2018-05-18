@@ -4,8 +4,8 @@ var booklet_uploader = new function() {
         max_files: null,
         max_size: null,
         min_size: null,
-        file_types: '*',
-        multiple: false,
+        file_types: '',
+        multiple: true,
         onFileUploadDone: function(file) {},
         onFileUploadSuccess: function(file) {},
         onFileUploadError: function(file) {},
@@ -20,21 +20,89 @@ var booklet_uploader = new function() {
 
         dialog.options = $.extend(this.defaults, options);
         dialog.number_of_uploaded_or_queued = 0;
-        dialog.uploaded_files = [];
+        dialog.uploaded_files = {};
         dialog.queue = {};
         dialog.onFilesSelect = function(files) {
             for (var i = 0; i < files.length; i++) {
                 if (this.isMaxFilesNumberLimitExceeded()) { break; }
 
                 var file = this.pickFile(files[i]);
+                file.element.prependTo(this.elements.files_list);
 
                 this.queue[file.hash] = file;
 
                 ++this.number_of_uploaded_or_queued;
 
-                file.element.prependTo(this.elements.files_list);
+                if (this.isFileValid(file)) {
+                    file.upload.call(file);
+                } else {
+                    file.onReject.call(file);
+                }
 
-                file.upload();
+
+            }
+        };
+        dialog.isFileValid = function(file) {
+            if (this.validations.notAllowedType.call(this, file)) {
+
+                    return false;
+            }
+
+            if (this.validations.isMaxSizeExceeded.call(this, file)) {
+
+                    return false;
+            }
+
+            if (this.validations.isMinSizeExceeded.call(this, file)) {
+
+                    return false;
+            }
+
+            return true;
+        };
+        dialog.validations = {
+            notAllowedType: function(file) {
+                if (this.options.file_types == '') { return false; }
+
+                var allowed_mimes = this.options.file_types.replace(' ', '').split(',');
+
+                for (var i = 0; i < allowed_mimes.length; i++) {
+                    var mime_parts = allowed_mimes[i].split('/');
+
+                    if (file.type == allowed_mimes[i]) {
+
+                        return false;
+                    }
+
+                    if (file.type.split('/')[0] == mime_parts[0] && mime_parts[1] == '*') {
+
+                        return false;
+                    }
+                }
+
+                file.errors.push(booklet_uploader.locale.invalid_file_type);
+
+                return true;
+            },
+            isMaxSizeExceeded: function(file) {
+                if (this.options.max_size == null || file.size <= this.options.max_size) {
+
+                    return false;
+                }
+
+                file.errors.push(booklet_uploader.locale.max_file_size_exceeded);
+
+                return true;
+            },
+            isMinSizeExceeded: function(file) {
+                if (this.options.min_size == null || file.size >= this.options.min_size) {
+
+                    return false;
+                }
+
+                file.errors.push(booklet_uploader.locale.min_file_size_exceeded);
+
+                return true;
             }
         };
         dialog.render = function() {
@@ -61,7 +129,7 @@ var booklet_uploader = new function() {
             $('body').append(
                 this.elements.dialog.container.hide().append([
                     // File input
-                    this.elements.input.attr({ multiple: options.multiple, accept: options.file_types }).hide(),
+                    this.elements.input.attr({ multiple: this.options.multiple, accept: this.options.file_types }).hide(),
                     // Dialog
                     this.elements.dialog.dialog.append([
                         // Dialog header
@@ -123,7 +191,7 @@ var booklet_uploader = new function() {
             this.elements.actions.close_dialog.on('click', function() { dialog.close.call(dialog); });
         };
         dialog.close = function() {
-            for (var file_hash in dialog.queue) {
+            for (var file_hash in this.queue) {
                 var file = this.queue[file_hash];
 
                 file.xhr.abort();
@@ -142,189 +210,110 @@ var booklet_uploader = new function() {
             this.elements.files_counter.html(files_counter_text);
         };
         dialog.pickFile = function(file_data) {
-            var hash = booklet_uploader.generateFileHash();
-            var file = {
-                data: file_data,
-                hash: hash,
-                name: file_data.name,
-                size: file_data.size,
-                type: file_data.type,
-                uploaded: true,
-                file_info: null,
-                errors: [],
-                element: $('<li>' +
-                    '<div class="file ' + hash + '">' +
-                        '<div class="file-thumb"><img src="/public/assets/plugins/uploader/images/file_types/file.svg" alt="' + file_data.name + '" /></div>' +
-                        '<div class="file-details">' +
-                            '<span class="file-name">' + file_data.name + '</span>' +
-                            '<span class="file-size">' + booklet_uploader.bytesToMagebytes(file_data.size) + ' MB</span>' +
-                        '</div>' +
-                        '<div class="upload-progress"><div class="progress"></div></div>' +
+            var file = $.Deferred();
+            file.data = file_data;
+            file.hash = booklet_uploader.generateFileHash();
+            file.name = file_data.name;
+            file.size = file_data.size;
+            file.type = file_data.type;
+            file.errors = [];
+            file.element = $('<li>' +
+                '<div class="file ' + file.hash + '">' +
+                    '<div class="file-preview"></div>' +
+                    '<div class="file-details">' +
+                        '<span class="file-name">' + file.name + '</span>' +
+                        '<span class="file-size">' + booklet_uploader.bytesToMagebytes(file.size) + ' MB</span>' +
                     '</div>' +
-                '</li>'),
-                isValid: function() {
-                    if (!this.validators.isAllowedType()) {
-                        var error_text = booklet_uploader.locale.invalid_file_type;
+                    '<div class="upload-progress"><div class="progress"></div></div>' +
+                '</div>' +
+            '</li>');
+            file.showErrors = function() {
+                if (this.errors.length > 0 && this.element.find('.file .upload-status').length == 0) {
+                    this.element.find('.file').append('<i class="upload-status error fa fa-exclamation"></i>');
+                }
 
-                        this.element.find('.file-details').append('<div class="file-error-text">' + error_text + '</div>');
-                        this.errors.push(error_text);
+                for (var i = 0; i < this.errors.length; i++) {
+                    this.element.find('.file-details .file-error-text').remove();
+                    this.element.find('.file-details').append('<div class="file-error-text">' + this.errors[i] + '</div>');
+                }
+            };
+            file.xhr = null;
+            file.upload = function() {
+                var data = new FormData();
+                data.append('files[]', this.data, this.name);
 
-                        return false;
-                    }
+                this.element.append('<div class="upload-progress"><div class="progress"></div></div>');
 
-                    if (this.validators.isMaxSizeExceeded()) {
-                        var error_text = booklet_uploader.locale.max_file_size_exceeded;
-
-                        this.element.find('.file-details').append('<div class="file-error-text">' + error_text + '</div>');
-                        this.errors.push(error_text);
-
-                        return false;
-                    }
-
-                    if (this.validators.isMinSizeExceeded()) {
-                        var error_text = booklet_uploader.locale.min_file_size_exceeded;
-
-                        this.element.find('.file-details').append('<div class="file-error-text">' + error_text + '</div>');
-                        this.errors.push(error_text);
-
-                        return false;
-                    }
-
-                    return true;
-                },
-                validators: {
-                    isAllowedType: function() {
-                        if (dialog.options.file_types === null || dialog.options.file_types == '*') {
-                            return true;
-                        }
-
-                        var file_mime_parts = file.type.split('/');
-                        var allowed_mimes = dialog.options.file_types.replace(' ', '').split(',');
-
-                        for (var i = 0; i < allowed_mimes.length; i++) {
-                            var mime_parts = allowed_mimes[i].split('/');
-
-                            if (file_mime_parts[0] == mime_parts[0] && (mime_parts[1] == '*' || file_mime_parts[1] == mime_parts[1])) {
-                                return true;
+                this.xhr = $.ajax({
+                    url: dialog.options.endpoint,
+                    type: 'POST',
+                    method: 'POST',
+                    data: data,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    async: true,
+                    xhr: function(){
+                        var xhr = new window.XMLHttpRequest();
+                        xhr.upload.addEventListener("progress", function(e){
+                            if (e.lengthComputable) {
+                                file.onProgress.call(file, ((e.loaded * 100) / e.total));
                             }
-                        }
+                        }, false);
 
-                        return false;
+                        return xhr;
                     },
-                    isMaxSizeExceeded: function() {
-                        return (dialog.options.max_size !== null && file.size > dialog.options.max_size) ? true : false;
-                    },
-                    isMinSizeExceeded: function() {
-                        return (dialog.options.min_size == null || file.size >= dialog.options.min_size) ? false : true;
-                    },
-                },
-                showErrors: function() {
-                    for (var i = 0; i < file.errors.length; i++) {
-                        file.element.find('.file-details .file-error-text').remove();
-                        file.element.find('.file-details').append('<div class="file-error-text">' + file.errors[i] + '</div>');
-                    }
-                },
-                xhr: null,
-                upload: function() {
-                    if (!this.isValid()) {
-                        this.onFileReject();
+                }).done(function(file_info) {
+                    file_info = $.parseJSON(file_info);
 
-                        return false;
+                    file.file_info = file_info;
+                    dialog.uploaded_files[file.hash] = file;
+
+                    if (file_info.hasOwnProperty('preview')) {
+                        file.element.find('.file-preview').css({
+                            'background-color': '#ffffff'
+                        }).append('<img src="' + file_info.preview + '" alt="' + file.name + '" />');
                     }
 
-                    var data = new FormData();
-                    data.append('files[]', this.data, this.name);
+                    file.resolve(file_info).element.find('.file').append('<i class="upload-status success fa fa-check"></i>');
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.log(jqXHR, textStatus, errorThrown);
 
-                    this.xhr = $.ajax({
-                        url: options.endpoint,
-                        type: 'POST',
-                        method: 'POST',
-                        data: data,
-                        cache: false,
-                        contentType: false,
-                        processData: false,
-                        xhr: function() {
-                            var xhr = new window.XMLHttpRequest();
+                    var response = $.parseJSON(jqXHR.responseText);
 
-                            xhr.upload.addEventListener("progress", function(e){
-                                if (e.lengthComputable) {
-                                    var progress = Math.round((e.loaded * 100) / e.total);
+                    var message = booklet_uploader.locale.upload_error;
+                    if (typeof response.message !== 'undefined') {
+                        message = response.message;
+                    }
 
-                                    file.element.find('.upload-progress .progress').css({ width: progress + '%' });
-                                }
+                    file.errors.push(message);
 
-                                if (!e.lengthComputable || progress == 100) {
-                                    file.onUploadDone();
-                                }
-                            }, false);
+                    file.element.find('.file').append('<i class="upload-status error fa fa-exclamation"></i>');
 
-                            xhr.upload.addEventListener("error", function(e){
-                                file.errors.push(booklet_uploader.locale.upload_abort);
+                    --dialog.number_of_uploaded_or_queued;
 
-                                file.onUploadDone();
-                            }, false);
-
-                            return xhr;
-                        },
-                        success: function(file_data) { file.onUploadSuccess(file_data); },
-                        error: function(xhr) { file.onUploadError(xhr); },
-                    });
-                },
-                onUploadDone: function() {
-                    this.element.find('.upload-progress').remove();
-
-                    dialog.options.onFileUploadDone(this);
-                },
-                onUploadSuccess: function(file_info) {
-                    this.uploaded = true;
-                    this.file_info = file_info;
-
-                    this.element.find('.file').addClass('uploaded').append('<i class="upload-status success fa fa-check"></i>');
-
-                    delete dialog.queue[this.hash];
-                    dialog.uploaded_files.push(this);
-
+                    file.reject(jqXHR, textStatus, errorThrown).showErrors();
+                }).always(function(data, textStatus, errorThrown) {
                     dialog.updateFilesCounter();
-                    dialog.options.onFileUploadSuccess(this);
-                },
-                onUploadError: function(xhr) {
-                    console.error(xhr);
 
-                    --dialog.number_of_uploaded_or_queued;
+                    delete dialog.queue[file.hash];
 
-                    delete dialog.queue[this.hash];
+                    file.element.find('.upload-progress').remove();
+                }).promise();
+            };
+            file.onProgress = function(progress) {
+                this.element.find('.upload-progress .progress').css({ width: progress + '%' });
+            },
+            file.onReject = function() {
+                --dialog.number_of_uploaded_or_queued;
 
-                    this.errors.push(booklet_uploader.locale.upload_error);
-                    this.element.find('.file').append('<i class="upload-status error fa fa-exclamation"></i>');
-                    this.showErrors();
+                delete dialog.queue[this.hash];
 
-                    dialog.options.onFileUploadError(this);
-                },
-                onUploadAbort: function() {
-                    --dialog.number_of_uploaded_or_queued;
+                this.element.find('.upload-progress').remove();
+                this.showErrors();
 
-                    delete dialog.queue[this.hash];
-
-                    this.errors.push(booklet_uploader.locale.upload_abort);
-                    this.element.find('.upload-progress').remove();
-                    this.element.find('.file').append('<i class="upload-status error fa fa-exclamation"></i>');
-                    this.showErrors();
-
-                    dialog.options.onFileUploadAbort(this);
-                },
-                onFileReject: function() {
-                    --dialog.number_of_uploaded_or_queued;
-
-                    delete dialog.queue[this.hash];
-
-                    this.element.find('.upload-progress').remove();
-                    this.element.find('.file').append('<i class="upload-status error fa fa-exclamation"></i>');
-                    this.showErrors();
-
-                    dialog.options.onFileReject(this);
-                },
-                onUploadProgress: function(progress) {},
-            }
+                dialog.options.onFileReject(this);
+            };
 
             return file;
         };
@@ -334,12 +323,12 @@ var booklet_uploader = new function() {
         dialog.elements = {
             input: $('<input id="booklet-uploader-files-picker" class="booklet-uploader-files-picker" type="file" />'),
             actions: {
-                select_files: $('<label class="select-files" for="booklet-uploader-files-picker">' + this.locale.select_files_button_single_file + '</label>'),
-                close_dialog: $('<button class="close-dialog">' + this.locale.close_button + '</button>'),
+                select_files: $('<label class="select-files" for="booklet-uploader-files-picker">' + booklet_uploader.locale.select_files_button_single_file + '</label>'),
+                close_dialog: $('<button class="close-dialog">' + booklet_uploader.locale.close_button + '</button>'),
             },
             drop_area: {
                 container: $('<div class="drop-area"></div>'),
-                text: $('<div class="text">' + this.locale.drop_area_text_single_file + '</div>'),
+                text: $('<div class="text">' + booklet_uploader.locale.drop_area_text_single_file + '</div>'),
             },
             files_list: $('<ul class="files-list"></ul>'),
             files_counter: $('<div class="files-counter">' + booklet_uploader.locale.files_counter.replace('%files_number%', 0) + '</div>'),
@@ -347,7 +336,7 @@ var booklet_uploader = new function() {
             dialog: {
                 container: $('<div id="booklet-uploader-dialog"></div>'),
                 dialog: $('<div class="dialog"></div>'),
-                header: $('<div class="dialog-header">' + this.locale.header_text + '</div>'),
+                header: $('<div class="dialog-header">' + booklet_uploader.locale.header_text + '</div>'),
                 content: $('<div class="dialog-content"></div>'),
                 footer: $('<div class="dialog-footer"></div>'),
             }
@@ -361,7 +350,7 @@ var booklet_uploader = new function() {
 
     var default_locale = {
         header_text: 'Select files to upload',
-        close_button: 'Done',
+        close_button: 'Upload',
         drop_area_text_single_file: 'Drag and drop file here<br /> or',
         drop_area_text_multiple_files: 'Drag and drop files here<br /> or',
         select_files_button_single_file: 'Select file',
