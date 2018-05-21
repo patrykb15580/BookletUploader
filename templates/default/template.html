@@ -1,0 +1,76 @@
+<script id="booklet-uploader-template" type="text/html">
+    <div id="booklet-uploader--dialog">
+        <input id="booklet-uploader--files-picker" class="booklet-uploader--files-picker" type="file" />
+        <div class="booklet-uploader--panel">
+            <div class="booklet-uploader--panel-header">
+                {{{panel_title}}}
+                <button class="booklet-uploader--dialog-close">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="booklet-uploader--panel-content">
+                <div class="booklet-uploader--drop-area">
+                    <div class="booklet-uploader--drop-area-text">
+                        {{{drop_area}}}
+                    </div>
+                    <label class="booklet-uploader--select-files" for="booklet-uploader--files-picker">
+                        {{{files_picker}}}
+                    </label>
+                    {{#file_size_limit_info}}
+                        <div class="booklet-uploader--max-file-size-info">
+                            {{{file_size_limit_info}}}
+                        </div>
+                    {{/file_size_limit_info}}
+                </div>
+                <ul class="booklet-uploader--files-list">
+                    <li class="booklet-uploader--file 8ns606g03">
+                        <div class="booklet-uploader--file-preview"></div>
+                        <div class="booklet-uploader--file-details">
+                            <span class="booklet-uploader--file-name">003.jpg</span>
+                            <span class="booklet-uploader--file-size" style="display: none;">0.0 MB</span>
+                            <span class="booklet-uploader--upload-error">Błąd podczas wysyłania</span>
+                        </div>
+                    </li>
+                    <li class="booklet-uploader--file pdeifke7x">
+                        <div class="booklet-uploader--file-preview" style="background-color: rgb(255, 255, 255);">
+                            <img src="/public/assets/images/fotobum_logo.svg" alt="022.jpg">
+                        </div>
+                        <div class="booklet-uploader--file-details">
+                            <span class="booklet-uploader--file-name">022.jpg</span>
+                            <span class="booklet-uploader--file-size">0.0 MB</span>
+                        </div>
+                    </li>
+                    <li class="booklet-uploader--file g3sqi7ma4">
+                        <div class="booklet-uploader--file-preview" style="background-color: rgb(255, 255, 255);">
+                            <img src="/public/assets/images/fotobum_logo.svg" alt="004.jpg">
+                        </div>
+                        <div class="booklet-uploader--file-details">
+                            <span class="booklet-uploader--file-name">004.jpg</span>
+                            <span class="booklet-uploader--file-size">0.0 MB</span>
+                        </div>
+                    </li>
+                    <li class="booklet-uploader--file 12345gerfgrfgwevw">
+                        <div class="booklet-uploader--file-preview"></div>
+                        <div class="booklet-uploader--file-details">
+                            <span class="booklet-uploader--file-name">B30475A3-B79D-4EE1-8276-8839E4F6D124.jpg</span>
+                            <span class="booklet-uploader--file-size">2.2 MB</span>
+                        </div>
+                        <div class="booklet-uploader--upload-progress">
+                           <div class="booklet-uploader--progressbar">
+                               <div class="booklet-uploader--progress" style="width: 32%;"></div>
+                           </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="booklet-uploader--panel-footer">
+                <div class="booklet-uploader--files-counter">
+                    {{{files_counter}}}
+                </div>
+                <button class="booklet-uploader--dialog-done">
+                    {{{done}}}
+                </button>
+            </div>
+        </div>
+    </div>
+</script>
