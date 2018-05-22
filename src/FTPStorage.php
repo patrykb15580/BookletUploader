@@ -95,8 +95,6 @@ class FTPStorage
 
                 return false;
             }
-
-            ftp_chdir($this->connection, $name);
         }
 
         ftp_chdir($this->connection, $current_dir);
