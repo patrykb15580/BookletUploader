@@ -177,26 +177,29 @@ var booklet_uploader = new function() {
                 }).on('change', function() { dialog.onFilesSelect.call(dialog, this.files); });
 
                 // Drag and drop
-                dialog.elements.drop_area.on('dragover', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                dialog.elements.drop_area.bind({
+                    dragover: function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
 
-                    if (!dialog.isMaxFilesNumberLimitExceeded()) { $(this).addClass('drag-in'); }
-                });
+                        if (!dialog.isMaxFilesNumberLimitExceeded()) {
+                            $(this).addClass('drag-in');
+                        }
+                    },
+                    dragleave: function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
 
-                dialog.elements.drop_area.on('dragleave', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                        $(this).removeClass('drag-in');
+                    },
+                    drop: function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
 
-                    $(this).removeClass('drag-in');
-                });
+                        $(this).removeClass('drag-in');
 
-                dialog.elements.drop_area.on('drop', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    $(this).removeClass('drag-in');
-                    dialog.onFilesSelect.call(dialog, e.originalEvent.dataTransfer.files);
+                        dialog.onFilesSelect.call(dialog, e.originalEvent.dataTransfer.files);
+                    }
                 });
 
                 // Close dialog
@@ -229,7 +232,7 @@ var booklet_uploader = new function() {
         dialog.updateFilesCounter = function() {
             var text = booklet_uploader.locale.files_counter.default;
             if (this.options.max_files) {
-                text = booklet_uploader.locale.files_counter_with_limit;
+                text = booklet_uploader.locale.files_counter.limit;
             }
 
             text = text.replace('%files_number%', this.number_of_uploaded_or_queued)

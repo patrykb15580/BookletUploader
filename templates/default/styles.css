@@ -317,7 +317,7 @@
         border: 2px dashed #cecece;
     }
 
-    #booklet-uploader-dialog .dialog .drop-area.drag-in {
+    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area.drag-in {
         background-color: #feefb3;
     }
 
