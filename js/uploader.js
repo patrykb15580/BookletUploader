@@ -3,6 +3,8 @@ var booklet_uploader = new function() {
         endpoint: null,
         template: 'default',
         custom_template: null,
+        locale: 'en',
+        storage: 'local',
         max_files: null,
         max_size: null,
         min_size: null,
@@ -19,6 +21,7 @@ var booklet_uploader = new function() {
     this.bytesToMagebytes = function(bytes, length = 1) { return parseFloat(bytes / (1024 * 1024)).toFixed(length); };
     this.openDialog = function(options = {}) {
         var dialog = $.Deferred();
+        var custom_locale = (typeof BOOKLET_UPLOADER_LOCALE == 'undefined') ? {} : BOOKLET_UPLOADER_LOCALE;
 
         dialog.options = $.extend(this.defaults, options);
         dialog.number_of_uploaded_or_queued = 0;
@@ -36,6 +39,7 @@ var booklet_uploader = new function() {
             files_list: null,
             files_counter: null,
         };
+        dialog.locale = $.extend(booklet_uploader.locales[dialog.options.locale], custom_locale);
         dialog.onFilesSelect = function(files) {
             for (var i = 0; i < files.length; i++) {
                 if (this.isMaxFilesNumberLimitExceeded()) { break; }
@@ -52,25 +56,12 @@ var booklet_uploader = new function() {
                 } else {
                     file.onReject.call(file);
                 }
-
-
             }
         };
         dialog.isFileValid = function(file) {
-            if (this.validations.notAllowedType.call(this, file)) {
-
-                    return false;
-            }
-
-            if (this.validations.isMaxSizeExceeded.call(this, file)) {
-
-                    return false;
-            }
-
-            if (this.validations.isMinSizeExceeded.call(this, file)) {
-
-                    return false;
-            }
+            if (this.validations.notAllowedType.call(this, file)) { return false; }
+            if (this.validations.isMaxSizeExceeded.call(this, file)) { return false; }
+            if (this.validations.isMinSizeExceeded.call(this, file)) { return false; }
 
             return true;
         };
@@ -94,7 +85,7 @@ var booklet_uploader = new function() {
                     }
                 }
 
-                file.errors.push(booklet_uploader.locale.invalid_file_type);
+                file.errors.push(this.locale.invalid_file_type);
 
                 return true;
             },
@@ -104,7 +95,7 @@ var booklet_uploader = new function() {
                     return false;
                 }
 
-                file.errors.push(booklet_uploader.locale.max_file_size_exceeded);
+                file.errors.push(this.locale.max_file_size_exceeded);
 
                 return true;
             },
@@ -114,34 +105,34 @@ var booklet_uploader = new function() {
                     return false;
                 }
 
-                file.errors.push(booklet_uploader.locale.min_file_size_exceeded);
+                file.errors.push(this.locale.min_file_size_exceeded);
 
                 return true;
             }
         };
         dialog.render = function() {
             var texts = {
-                panel_title: booklet_uploader.locale.header,
-                drop_area_text: booklet_uploader.locale.drop_area.single,
-                files_picker: booklet_uploader.locale.files_picker.single,
+                panel_title: this.locale.header,
+                drop_area_text: this.locale.drop_area.single,
+                files_picker: this.locale.files_picker.single,
                 file_size_limit_info: null,
-                files_counter: booklet_uploader.locale.files_counter.default.replace('%files_number%', this.number_of_uploaded_or_queued),
-                done: booklet_uploader.locale.done
+                files_counter: this.locale.files_counter.default.replace('%files_number%', this.number_of_uploaded_or_queued),
+                done: this.locale.done
             }
 
             if (this.options.multiple) {
-                texts.drop_area = booklet_uploader.locale.drop_area.multiple;
-                texts.files_picker = booklet_uploader.locale.files_picker.multiple;
+                texts.drop_area = this.locale.drop_area.multiple;
+                texts.files_picker = this.locale.files_picker.multiple;
             }
 
             if (this.options.max_size) {
                 var max_size_str = booklet_uploader.bytesToMagebytes(dialog.options.max_size) + ' MB';
 
-                texts.file_size_limit_info = booklet_uploader.locale.info.max_size.replace('%max_file_size%', max_size_str);
+                texts.file_size_limit_info = this.locale.info.max_size.replace('%max_file_size%', max_size_str);
             }
 
             if (this.options.max_files) {
-                texts.files_counter = booklet_uploader.locale.files_counter.limit
+                texts.files_counter = this.locale.files_counter.limit
                     .replace('%files_number%', this.number_of_uploaded_or_queued)
                     .replace('%files_number_limit%', this.options.max_files);
             }
@@ -203,7 +194,16 @@ var booklet_uploader = new function() {
                 });
 
                 // Close dialog
-                dialog.elements.buttons.close.on('click', function() { dialog.close.call(dialog); });
+                dialog.elements.buttons.close.on('click', function() {
+                    for (var file_hash in this.queue) {
+                        var file = this.queue[file_hash];
+
+                        file.xhr.abort();
+                        file.onUploadAbort();
+                    }
+
+                    dialog.close.call(dialog);
+                });
 
                 dialog.elements.buttons.done.on('click', function() {
                     dialog.resolve(dialog.uploaded_files).close.call(dialog);
@@ -220,19 +220,12 @@ var booklet_uploader = new function() {
             });
         };
         dialog.close = function() {
-            for (var file_hash in this.queue) {
-                var file = this.queue[file_hash];
-
-                file.xhr.abort();
-                file.onUploadAbort();
-            }
-
             this.elements.container.fadeOut(300, function() { $(this).remove(); });
         };
         dialog.updateFilesCounter = function() {
-            var text = booklet_uploader.locale.files_counter.default;
+            var text = this.locale.files_counter.default;
             if (this.options.max_files) {
-                text = booklet_uploader.locale.files_counter.limit;
+                text = this.locale.files_counter.limit;
             }
 
             text = text.replace('%files_number%', this.number_of_uploaded_or_queued)
@@ -274,7 +267,9 @@ var booklet_uploader = new function() {
             file.xhr = null;
             file.upload = function() {
                 var data = new FormData();
-                data.append('files[]', this.data, this.name);
+
+                data.append('storage', dialog.options.storage);
+                data.append(0, this.data, this.name);
 
                 this.element.append('<div class="booklet-uploader--upload-progress">' +
                     '<div class="booklet-uploader--progressbar">' +
@@ -292,12 +287,13 @@ var booklet_uploader = new function() {
                     processData: false,
                     async: true,
                     xhr: function(){
-                        var xhr = new window.XMLHttpRequest();
-                        xhr.upload.addEventListener("progress", function(e){
-                            if (e.lengthComputable) {
+                        var xhr = $.ajaxSettings.xhr();
+
+                        if (xhr.upload) {
+                            xhr.upload.addEventListener('progress', function(e){
                                 file.onProgress.call(file, ((e.loaded * 100) / e.total));
-                            }
-                        }, false);
+                            });
+                        }
 
                         return xhr;
                     },
@@ -319,7 +315,7 @@ var booklet_uploader = new function() {
 
                     var response = $.parseJSON(jqXHR.responseText);
 
-                    var message = booklet_uploader.locale.errors.upload.default;
+                    var message = dialog.locale.errors.upload.default;
                     if (typeof response.message !== 'undefined') {
                         message = response.message;
                     }
@@ -361,39 +357,66 @@ var booklet_uploader = new function() {
 
         return dialog.promise();
     };
-
-    var default_locale = {
-        header: 'Select files to upload',
-        done: 'Upload',
-        files_picker: {
-            single: 'Select file',
-            multiple: 'Select files'
-        },
-        drop_area: {
-            single: 'Drag and drop file here<br /> or',
-            multiple: 'Drag and drop files here<br /> or'
-        },
-        info: {
-            max_size: 'Max size of uploaded file is <b>%max_file_size%</b>'
-        },
-        files_counter: {
-            default: 'Uploaded <b>%files_number%</b> files',
-            limit: 'Uploaded <b>%files_number%</b> from <b>%files_number_limit%</b> files'
-        },
-        errors: {
-            file: {
-                invalid_type: 'Invalid file type',
-                max_size_exceeded: 'Max file size limit exceeded',
-                min_size_exceeded: 'Min file size limit exceeded'
+    this.locales = {
+        en: {
+            header: 'Select files to upload',
+            done: 'Upload',
+            files_picker: {
+                single: 'Select file',
+                multiple: 'Select files'
             },
-            upload: {
-                default: 'Something went wrong',
-                abort: 'Upload canceled',
+            drop_area: {
+                single: 'Drag and drop file here<br /> or',
+                multiple: 'Drag and drop files here<br /> or'
+            },
+            info: {
+                max_size: 'Max size of uploaded file is <b>%max_file_size%</b>'
+            },
+            files_counter: {
+                default: 'Uploaded <b>%files_number%</b> files',
+                limit: 'Uploaded <b>%files_number%</b> from <b>%files_number_limit%</b> files'
+            },
+            errors: {
+                file: {
+                    invalid_type: 'Invalid file type',
+                    max_size_exceeded: 'Max file size limit exceeded',
+                    min_size_exceeded: 'Min file size limit exceeded'
+                },
+                upload: {
+                    default: 'Something went wrong',
+                    abort: 'Upload canceled',
+                }
+            }
+        },
+        pl: {
+            header: 'Wybierz pliki do przesłania',
+            done: 'Wyślij',
+            files_picker: {
+                single: 'Kliknij aby wybrać plik',
+                multiple: 'Kliknij aby wybrać pliki'
+            },
+            drop_area: {
+                single: 'Przeciągnij i upuść tutaj plik<br /> lub',
+                multiple: 'Przeciągnij i upuść tutaj pliki<br /> lub'
+            },
+            info: {
+                max_size: 'Maksymalna waga przesyłanego pliku wynosi <b>%max_file_size%</b>'
+            },
+            files_counter: {
+                default: 'Wybrano <b>%files_number%</b> plików',
+                limit: 'Wybrano <b>%files_number%</b> z <b>%files_number_limit%</b> plików'
+            },
+            errors: {
+                file: {
+                    invalid_type: 'Nieprawidłowy format pliku',
+                    max_size_exceeded: 'Zbyt duży rozmiar pliku',
+                    min_size_exceeded: 'Zbyt mały rozmiar pliku'
+                },
+                upload: {
+                    default: 'Błąd podczas wysyłania',
+                    abort: 'Wysyłanie przerwane'
+                }
             }
         }
     };
-
-    var custom_locale = (typeof BOOKLET_UPLOADER_LOCALE === 'undefined') ? {} : BOOKLET_UPLOADER_LOCALE;
-
-    this.locale = $.extend(default_locale, custom_locale);
 };
