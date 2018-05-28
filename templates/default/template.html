@@ -1,4 +1,4 @@
-<script id="booklet-uploader-template" type="text/html">
+<script id="booklet-uploader-panel" type="text/html">
     <div id="booklet-uploader--dialog">
         <input id="booklet-uploader--files-picker" class="booklet-uploader--files-picker" type="file" />
         <div class="booklet-uploader--panel">
@@ -34,4 +34,25 @@
             </div>
         </div>
     </div>
+</script>
+
+<script id="booklet-uploader-file" type="text/html">
+    <li class="booklet-uploader--file file-{{file_hash}}" data-hash="{{file_hash}}">
+        <div class="booklet-uploader--file-preview"></div>
+        <div class="booklet-uploader--file-details">
+            <span class="booklet-uploader--file-name">{{file_name}}</span>
+            <span class="booklet-uploader--file-size">{{file_size}}</span>
+            <span class="booklet-uploader--upload-error"></span>
+        </div>
+        <div class="booklet-uploader--upload-progress" style="display: none;">
+            <div class="booklet-uploader--progressbar">
+                <div class="booklet-uploader--progress" style="width: 0%;"></div>
+            </div>
+        </div>
+        <div class="booklet-uploader--file-actions">
+            <button class="booklet-uploader--file-action-button file-remove">
+                <i class="fa fa-trash"></i>
+            </button>
+        </div>
+    </li>
 </script>

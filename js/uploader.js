@@ -1,422 +1,501 @@
-var booklet_uploader = new function() {
-    this.defaults = {
+var BookletUploaderHelpers = (function() {
+    var generateHash = function() {
+
+        return Math.random().toString(36).substr(2, 9);
+    };
+
+    var sizeToSizeString = function(bytes) {
+        var units = ['B','kB','MB','GB','TB','PB','EB','ZB','YB'];
+        var size = bytes;
+        var unit_index = 0;
+
+        while (Math.abs(size) >= 1024 && unit_index < units.length) {
+            size /= 1024;
+            ++unit_index;
+        }
+
+        return Math.round(size * 10) / 10 + ' ' + units[unit_index];
+    };
+
+    return {
+        sizeToSizeString: sizeToSizeString,
+        generateHash: generateHash,
+    }
+})();
+
+
+var BookletUploader = (function() {
+    var defaults = {
         endpoint: null,
         template: 'default',
         custom_template: null,
         locale: 'en',
-        storage: 'local',
-        max_files: null,
-        max_size: null,
-        min_size: null,
-        file_types: '',
+        store_to: 'local',
         multiple: true,
-        onFileUploadDone: function(file) {},
-        onFileUploadSuccess: function(file) {},
-        onFileUploadError: function(file) {},
-        onFileUploadAbort: function(file) {},
-        onFileReject: function(file) {},
-        onDialogOpen: function() {},
+        max_files: null,
+        template_file: '/vendor/patrykb15580/booklet-uploader/templates/default/template.html',
+        validations: {
+            type: null,
+            max_size: null,
+            min_size: null,
+        },
+        transformations: {}
     };
-    this.generateFileHash = function() { return Math.random().toString(36).substr(2, 9); };
-    this.bytesToMagebytes = function(bytes, length = 1) { return parseFloat(bytes / (1024 * 1024)).toFixed(length); };
-    this.openDialog = function(options = {}) {
-        var dialog = $.Deferred();
+
+    var openDialog = function(options) {
+        var dialog = new BookletUploaderDialog(options);
+        dialog.init();
+
+        return dialog;
+    };
+
+    var locale = function(locale = 'en') {
+        var locales = {
+            en: {
+                header: 'Select files to upload',
+                done: 'Upload',
+                files_picker: {
+                    single: 'Select file',
+                    multiple: 'Select files'
+                },
+                drop_area: {
+                    single: 'Drag and drop file here<br /> or',
+                    multiple: 'Drag and drop files here<br /> or'
+                },
+                info: {
+                    max_size: 'Max size of uploaded file is <b>%max_file_size%</b>'
+                },
+                files_counter: {
+                    default: 'Uploaded <b>%files_number%</b> files',
+                    limit: 'Uploaded <b>%files_number%</b> from <b>%files_number_limit%</b> files'
+                },
+                errors: {
+                    file: {
+                        invalid_type: 'Invalid file type',
+                        max_files_number_exceeded: 'Max files number limit exceeded',
+                        max_size_exceeded: 'Max file size limit exceeded',
+                        min_size_exceeded: 'Min file size limit exceeded'
+                    },
+                    upload: {
+                        default: 'Something went wrong',
+                        abort: 'Upload canceled',
+                    }
+                }
+            },
+            pl: {
+                header: 'Wybierz pliki do przesłania',
+                done: 'Wyślij',
+                files_picker: {
+                    single: 'Kliknij aby wybrać plik',
+                    multiple: 'Kliknij aby wybrać pliki'
+                },
+                drop_area: {
+                    single: 'Przeciągnij i upuść tutaj plik<br /> lub',
+                    multiple: 'Przeciągnij i upuść tutaj pliki<br /> lub'
+                },
+                info: {
+                    max_size: 'Maksymalna waga przesyłanego pliku wynosi <b>%max_file_size%</b>'
+                },
+                files_counter: {
+                    default: 'Wybrano <b>%files_number%</b> plików',
+                    limit: 'Wybrano <b>%files_number%</b> z <b>%files_number_limit%</b> plików'
+                },
+                errors: {
+                    file: {
+                        invalid_type: 'Nieprawidłowy format pliku',
+                        max_files_number_exceeded: 'Wybrano maksymalną liczbę plików',
+                        max_size_exceeded: 'Zbyt duży rozmiar pliku',
+                        min_size_exceeded: 'Zbyt mały rozmiar pliku'
+                    },
+                    upload: {
+                        default: 'Błąd podczas wysyłania',
+                        abort: 'Wysyłanie przerwane'
+                    }
+                }
+            }
+        };
+
+        var locale = locales[locale] || locales['en'];
         var custom_locale = (typeof BOOKLET_UPLOADER_LOCALE == 'undefined') ? {} : BOOKLET_UPLOADER_LOCALE;
 
-        dialog.options = $.extend(this.defaults, options);
-        dialog.number_of_uploaded_or_queued = 0;
-        dialog.uploaded_files = {};
-        dialog.queue = {};
-        dialog.elements = {
-            container: null,
-            input: null,
-            buttons: {
-                files_picker: null,
-                done: null,
-                close: null
-            },
-            drop_area: null,
-            files_list: null,
-            files_counter: null,
-        };
-        dialog.locale = $.extend(booklet_uploader.locales[dialog.options.locale], custom_locale);
-        dialog.onFilesSelect = function(files) {
-            for (var i = 0; i < files.length; i++) {
-                if (this.isMaxFilesNumberLimitExceeded()) { break; }
+        return $.extend(locale, custom_locale);
+    }
 
-                var file = this.pickFile(files[i]);
-                file.element.prependTo(this.elements.files_list);
+    return {
+        defaults: defaults,
+        openDialog: openDialog,
+        locale: locale,
+    }
+})();
 
-                this.queue[file.hash] = file;
 
-                ++this.number_of_uploaded_or_queued;
 
-                if (this.isFileValid(file)) {
-                    file.upload.call(file);
-                } else {
-                    file.onReject.call(file);
+var BookletUploaderDialog = function(options) {
+    var options = $.extend(BookletUploader.defaults, options);
+    var locale = BookletUploader.locale(options.locale);
+    var uploaded_or_queued = {};
+    var result = {};
+    var element = null;
+    var validators = {
+        type: function(file) {
+
+            if (options.validations.type == '' || options.validations.type == null) { return true; }
+
+            var allowed_types = options.validations.type.replace(' ', '').split(',');
+
+            for (var i = 0; i < allowed_types.length; i++) {
+                var type_parts = allowed_types[i].split('/');
+
+                if (file.type == allowed_types[i]) {
+
+                    return true;
+                }
+
+                if (file.type.split('/')[0] == type_parts[0] && type_parts[1] == '*') {
+
+                    return true;
                 }
             }
-        };
-        dialog.isFileValid = function(file) {
-            if (this.validations.notAllowedType.call(this, file)) { return false; }
-            if (this.validations.isMaxSizeExceeded.call(this, file)) { return false; }
-            if (this.validations.isMinSizeExceeded.call(this, file)) { return false; }
+
+            file.error.call(file, locale.errors.file.invalid_type);
+
+            return false;
+        },
+        maxSize: function(file) {
+            if (options.validations.max_size !== null && file.size > options.validations.max_size) {
+                console.log('max size');
+
+                file.error.call(file, locale.errors.file.max_size_exceeded);
+
+                return false;
+            }
 
             return true;
-        };
-        dialog.validations = {
-            notAllowedType: function(file) {
-                if (this.options.file_types == '') { return false; }
-
-                var allowed_mimes = this.options.file_types.replace(' ', '').split(',');
-
-                for (var i = 0; i < allowed_mimes.length; i++) {
-                    var mime_parts = allowed_mimes[i].split('/');
-
-                    if (file.type == allowed_mimes[i]) {
-
-                        return false;
-                    }
-
-                    if (file.type.split('/')[0] == mime_parts[0] && mime_parts[1] == '*') {
-
-                        return false;
-                    }
-                }
-
-                file.errors.push(this.locale.invalid_file_type);
-
-                return true;
-            },
-            isMaxSizeExceeded: function(file) {
-                if (this.options.max_size == null || file.size <= this.options.max_size) {
-
-                    return false;
-                }
-
-                file.errors.push(this.locale.max_file_size_exceeded);
-
-                return true;
-            },
-            isMinSizeExceeded: function(file) {
-                if (this.options.min_size == null || file.size >= this.options.min_size) {
-
-                    return false;
-                }
-
-                file.errors.push(this.locale.min_file_size_exceeded);
-
-                return true;
-            }
-        };
-        dialog.render = function() {
-            var texts = {
-                panel_title: this.locale.header,
-                drop_area_text: this.locale.drop_area.single,
-                files_picker: this.locale.files_picker.single,
-                file_size_limit_info: null,
-                files_counter: this.locale.files_counter.default.replace('%files_number%', this.number_of_uploaded_or_queued),
-                done: this.locale.done
-            }
-
-            if (this.options.multiple) {
-                texts.drop_area = this.locale.drop_area.multiple;
-                texts.files_picker = this.locale.files_picker.multiple;
-            }
-
-            if (this.options.max_size) {
-                var max_size_str = booklet_uploader.bytesToMagebytes(dialog.options.max_size) + ' MB';
-
-                texts.file_size_limit_info = this.locale.info.max_size.replace('%max_file_size%', max_size_str);
-            }
-
-            if (this.options.max_files) {
-                texts.files_counter = this.locale.files_counter.limit
-                    .replace('%files_number%', this.number_of_uploaded_or_queued)
-                    .replace('%files_number_limit%', this.options.max_files);
-            }
-
-            var template_file = '/vendor/patrykb15580/booklet-uploader/templates/' + this.options.template + '/template.html';
-            if (this.options.custom_template) {
-                template_file = this.options.custom_template;
-            }
-
-            var template = $.get(template_file, function(templates) {
-                var template = $(templates).filter('#booklet-uploader-template').html();
-                var panel = $(Mustache.render(template, texts));
-
-                dialog.elements.container = panel;
-                dialog.elements.input = panel.find('#booklet-uploader--files-picker').attr({ multiple: dialog.options.multiple, accept: dialog.options.file_types }).hide();
-                dialog.elements.buttons.files_picker = panel.find('.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area .booklet-uploader--select-files');
-                dialog.elements.buttons.done = panel.find('.booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--dialog-done');
-                dialog.elements.buttons.close = panel.find('.booklet-uploader--panel .booklet-uploader--panel-header .booklet-uploader--dialog-close');
-                dialog.elements.drop_area = panel.find('.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area');
-                dialog.elements.files_list = panel.find('.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--files-list');
-                dialog.elements.files_counter = panel.find('.booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--files-counter');
-
-                panel.hide().appendTo('body').fadeIn(300);
-
-                // Apply events
-                dialog.elements.input.on('click', function(e) {
-                    if (dialog.isMaxFilesNumberLimitExceeded()) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        dialog.elements.files_counter.css({ color: '#d80e24' }).fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
-                    }
-                }).on('change', function() { dialog.onFilesSelect.call(dialog, this.files); });
-
-                // Drag and drop
-                dialog.elements.drop_area.bind({
-                    dragover: function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        if (!dialog.isMaxFilesNumberLimitExceeded()) {
-                            $(this).addClass('drag-in');
-                        }
-                    },
-                    dragleave: function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        $(this).removeClass('drag-in');
-                    },
-                    drop: function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        $(this).removeClass('drag-in');
-
-                        dialog.onFilesSelect.call(dialog, e.originalEvent.dataTransfer.files);
-                    }
-                });
-
-                // Close dialog
-                dialog.elements.buttons.close.on('click', function() {
-                    for (var file_hash in this.queue) {
-                        var file = this.queue[file_hash];
-
-                        file.xhr.abort();
-                        file.onUploadAbort();
-                    }
-
-                    dialog.close.call(dialog);
-                });
-
-                dialog.elements.buttons.done.on('click', function() {
-                    dialog.resolve(dialog.uploaded_files).close.call(dialog);
-                });
-
-                dialog.elements.files_list.on('click', '.booklet-uploader--file .booklet-uploader--file-action-button.file-remove', function() {
-                    $(this).closest('.booklet-uploader--file').fadeOut(function() {
-                        var hash = $(this).data('hash');
-                        var file = dialog.uploaded_files[hash];
-
-                        file.delete.call(file);
-                    });
-                });
-            });
-        };
-        dialog.close = function() {
-            this.elements.container.fadeOut(300, function() { $(this).remove(); });
-        };
-        dialog.updateFilesCounter = function() {
-            var text = this.locale.files_counter.default;
-            if (this.options.max_files) {
-                text = this.locale.files_counter.limit;
-            }
-
-            text = text.replace('%files_number%', this.number_of_uploaded_or_queued)
-                .replace('%files_number_limit%', this.options.max_files);
-
-            this.elements.files_counter.html(text);
-        };
-        dialog.pickFile = function(file_data) {
-            var file = $.Deferred();
-            file.data = file_data;
-            file.hash = booklet_uploader.generateFileHash();
-            file.name = file_data.name;
-            file.size = file_data.size;
-            file.type = file_data.type;
-            file.errors = [];
-            file.element = $('<li class="booklet-uploader--file ' + file.hash + '" data-hash="' + file.hash + '">\
-                <div class="booklet-uploader--file-preview"></div>\
-                <div class="booklet-uploader--file-details">\
-                    <span class="booklet-uploader--file-name">' + file.name + '</span>\
-                    <span class="booklet-uploader--file-size">' + booklet_uploader.bytesToMagebytes(file.size) + ' MB</span>\
-                </div>\
-            </li>');
-            file.error = function(message) {
-                this.errors.push(message);
-                this.element.find('.booklet-uploader--file-details')
-                    .append('<span class="booklet-uploader--upload-error">' + message + '</span>')
-                    .find('.booklet-uploader--file-size').hide();
-            };
-            file.showErrors = function() {
-                if (this.errors.length > 0 && this.element.find('.file .upload-status').length == 0) {
-                    this.element.find('.file').append('<i class="upload-status error fa fa-exclamation"></i>');
-                }
-
-                for (var i = 0; i < this.errors.length; i++) {
-                    this.element.find('.file-details .file-error-text').remove();
-                    this.element.find('.file-details').append('<div class="file-error-text">' + this.errors[i] + '</div>');
-                }
-            };
-            file.xhr = null;
-            file.upload = function() {
-                var data = new FormData();
-
-                data.append('storage', dialog.options.storage);
-                data.append(0, this.data, this.name);
-
-                this.element.append('<div class="booklet-uploader--upload-progress">' +
-                    '<div class="booklet-uploader--progressbar">' +
-                        '<div class="booklet-uploader--progress"></div>' +
-                    '</div>' +
-                '</div>');
-
-                this.xhr = $.ajax({
-                    url: dialog.options.endpoint,
-                    type: 'POST',
-                    method: 'POST',
-                    data: data,
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    async: true,
-                    xhr: function(){
-                        var xhr = $.ajaxSettings.xhr();
-
-                        if (xhr.upload) {
-                            xhr.upload.addEventListener('progress', function(e){
-                                file.onProgress.call(file, ((e.loaded * 100) / e.total));
-                            });
-                        }
-
-                        return xhr;
-                    },
-                }).done(function(file_info) {
-                    file_info = $.parseJSON(file_info);
-
-                    file.file_info = file_info;
-                    dialog.uploaded_files[file.hash] = file;
-
-                    if (file_info.hasOwnProperty('preview')) {
-                        file.element.find('.booklet-uploader--file-preview').css({
-                            'background-color': '#ffffff'
-                        }).append('<img src="' + file_info.preview + '" alt="' + file.name + '" />');
-                    }
-
-                    file.resolve(file_info);
-                }).fail(function(jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR, textStatus, errorThrown);
-
-                    var response = $.parseJSON(jqXHR.responseText);
-
-                    var message = dialog.locale.errors.upload.default;
-                    if (typeof response.message !== 'undefined') {
-                        message = response.message;
-                    }
-
-                    --dialog.number_of_uploaded_or_queued;
-
-                    file.reject(jqXHR, textStatus, errorThrown).error(message);
-                }).always(function(data, textStatus, errorThrown) {
-                    dialog.updateFilesCounter();
-
-                    delete dialog.queue[file.hash];
-
-                    file.element.find('.booklet-uploader--upload-progress').remove();
-                }).promise();
-            };
-            file.onProgress = function(progress) {
-                this.element.find('.booklet-uploader--upload-progress .booklet-uploader--progressbar .booklet-uploader--progress').css({ width: progress + '%' });
-            },
-            file.onReject = function() {
-                --dialog.number_of_uploaded_or_queued;
-
-                delete dialog.queue[this.hash];
-
-                this.element.find('.upload-progress').remove();
-                this.showErrors();
-
-                dialog.options.onFileReject(this);
-            };
-
-            return file;
-        };
-        dialog.isMaxFilesNumberLimitExceeded = function() {
-            return (this.options.max_files == null || this.number_of_uploaded_or_queued < this.options.max_files) ? false : true;
-        };
-
-
-        dialog.render();
-        dialog.options.onDialogOpen();
-
-        return dialog.promise();
-    };
-    this.locales = {
-        en: {
-            header: 'Select files to upload',
-            done: 'Upload',
-            files_picker: {
-                single: 'Select file',
-                multiple: 'Select files'
-            },
-            drop_area: {
-                single: 'Drag and drop file here<br /> or',
-                multiple: 'Drag and drop files here<br /> or'
-            },
-            info: {
-                max_size: 'Max size of uploaded file is <b>%max_file_size%</b>'
-            },
-            files_counter: {
-                default: 'Uploaded <b>%files_number%</b> files',
-                limit: 'Uploaded <b>%files_number%</b> from <b>%files_number_limit%</b> files'
-            },
-            errors: {
-                file: {
-                    invalid_type: 'Invalid file type',
-                    max_size_exceeded: 'Max file size limit exceeded',
-                    min_size_exceeded: 'Min file size limit exceeded'
-                },
-                upload: {
-                    default: 'Something went wrong',
-                    abort: 'Upload canceled',
-                }
-            }
         },
-        pl: {
-            header: 'Wybierz pliki do przesłania',
-            done: 'Wyślij',
-            files_picker: {
-                single: 'Kliknij aby wybrać plik',
-                multiple: 'Kliknij aby wybrać pliki'
-            },
-            drop_area: {
-                single: 'Przeciągnij i upuść tutaj plik<br /> lub',
-                multiple: 'Przeciągnij i upuść tutaj pliki<br /> lub'
-            },
-            info: {
-                max_size: 'Maksymalna waga przesyłanego pliku wynosi <b>%max_file_size%</b>'
-            },
-            files_counter: {
-                default: 'Wybrano <b>%files_number%</b> plików',
-                limit: 'Wybrano <b>%files_number%</b> z <b>%files_number_limit%</b> plików'
-            },
-            errors: {
-                file: {
-                    invalid_type: 'Nieprawidłowy format pliku',
-                    max_size_exceeded: 'Zbyt duży rozmiar pliku',
-                    min_size_exceeded: 'Zbyt mały rozmiar pliku'
-                },
-                upload: {
-                    default: 'Błąd podczas wysyłania',
-                    abort: 'Wysyłanie przerwane'
-                }
+        minSize: function(file) {
+            if (options.validations.min_size !== null && file.size < options.validations.min_size) {
+                console.log('min size');
+
+                file.error.call(file, locale.errors.file.min_size_exceeded);
+
+                return false;
             }
+
+            return true;
         }
     };
+
+    var template = (function() {
+        var template = $.extend($.Deferred(), {
+            path: options.template_file,
+            html: null,
+            getHTML: function() {
+                $.get(this.path, function(html) {
+                    template.html = html;
+                    template.resolve();
+                });
+            },
+            render: function(selector, data) {
+                var html = $(this.html).filter(selector).html();
+
+                return $(Mustache.render(html, data));
+            }
+        });
+
+        template.getHTML();
+
+        return template;
+    })();
+
+    var init = function() {
+        template.done(function(template) {
+            _renderPanel();
+            _bindEvents();
+        });
+    };
+
+    var _getLocaleText = function(text, params = {}) {
+        for (var param in params) {
+            text = text.replace('%' + param + '%', params[param]);
+        }
+
+        return text;
+    };
+
+    var _numberOfUploadedOrQueued = function() {
+        return Object.keys(uploaded_or_queued).length;
+    };
+
+    var _templateData = function() {
+        var data = {
+            panel_title: _getLocaleText(locale.header),
+            drop_area_text: _getLocaleText(locale.drop_area.single),
+            files_picker: _getLocaleText(locale.files_picker.single),
+            file_size_limit_info: null,
+            files_counter: _getLocaleText(locale.files_counter.default, { files_number: _numberOfUploadedOrQueued() }),
+            done: _getLocaleText(locale.done),
+        }
+
+        if (options.multiple) {
+            data.drop_area = _getLocaleText(locale.drop_area.multiple);
+            data.files_picker = _getLocaleText(locale.files_picker.multiple);
+        }
+
+        if (options.validations.max_size) {
+            data.file_size_limit_info = _getLocaleText(locale.info.max_size, {
+                max_file_size: BookletUploaderHelpers.sizeToSizeString(options.validations.max_size)
+            });
+        }
+
+        if (options.max_files) {
+            data.files_counter = _getLocaleText(locale.files_counter.limit, {
+                files_number: _numberOfUploadedOrQueued(),
+                files_number_limit: options.max_files,
+            });
+        }
+
+        return data;
+    };
+
+    var _renderPanel = function() {
+        var template_data = _templateData();
+        element = template.render('#booklet-uploader-panel', template_data);
+
+        element.find('#booklet-uploader--files-picker').attr({
+            multiple: options.multiple,
+            accept: options.validations.type
+        }).hide();
+
+        element.hide().appendTo('body').fadeIn(300);
+    };
+
+    var _bindEvents = function() {
+        element.on('click', '#booklet-uploader--files-picker', function(e) {
+            if (_isMaxFilesNumberLimitExceeded()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        element.on('change', '#booklet-uploader--files-picker', function() {
+            _onFilesSelect(this.files);
+        });
+
+        element.on('click', '.booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--dialog-done', function() {
+            var results = [];
+
+            dialog.resolve(Object.values(result));
+            _close();
+        });
+
+        element.on('click', '.booklet-uploader--panel .booklet-uploader--panel-header .booklet-uploader--dialog-close', function() {
+            for (var i = 0; i < result.length; i++) {
+                result.abort();
+            }
+
+            dialog.reject();
+            _close();
+        });
+
+        element.on('dragover', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!_isMaxFilesNumberLimitExceeded()) {
+                $(this).addClass('drag-in');
+            }
+        });
+
+        element.on('dragleave', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            $(this).removeClass('drag-in');
+        });
+
+        element.on('drop', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            $(this).removeClass('drag-in');
+
+            if (!_isMaxFilesNumberLimitExceeded()) {
+                _onFilesSelect(e.originalEvent.dataTransfer.files);
+            }
+        });
+
+        element.on('click', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-actions .booklet-uploader--file-action-button.file-remove', function() {
+            var file_elem = $(this).closest('.booklet-uploader--file');
+            var hash = file_elem.data('hash');
+
+            if (hash in result) {
+                result[hash].delete.call(result);
+            }
+
+            if (hash in uploaded_or_queued) {
+                delete uploaded_or_queued[hash];
+                _updateFilesCounter();
+            }
+        });
+    };
+
+    var _isFileValid = function(file) {
+        if ('type' in options.validations && !validators.type(file)) {
+            return false;
+        }
+
+        if ('max_size' in options.validations && !validators.maxSize(file)) {
+            return false;
+        }
+
+        if ('min_size' in options.validations && !validators.minSize(file)) {
+            return false;
+        }
+
+        return true;
+    };
+
+    var _onFilesSelect = function(files) {
+        $.each(files, function(i, file_data) {
+            var file = new BookletUploaderFile(file_data, template);
+
+            result[file.hash] = file;
+            element.find('.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--files-list').prepend(file.element);
+
+            if (_isMaxFilesNumberLimitExceeded() || !_isFileValid(file)) {
+                file.error(locale.errors.file.max_files_number_exceeded);
+
+                return false;
+            }
+
+            uploaded_or_queued[file.hash] = file;
+            _updateFilesCounter();
+
+            file.upload.call(file, options.endpoint, options.store_to, options.transformations).done(function(file_info) {
+                file_info = $.parseJSON(file_info);
+                file.file_info = file_info;
+                file.is_stored = true;
+
+                if (file_info.preview !== 'undefined' && file_info.preview !== null) {
+                    file.element.find('.booklet-uploader--file-preview').append('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />');
+                }
+
+                file.resolve(file_info);
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                delete uploaded_or_queued[file.hash];
+
+                file.reject(jqXHR).error(locale.errors.upload.default);
+
+                _updateFilesCounter();
+            }).always(function() {
+                file.element.find('.booklet-uploader--upload-progress').hide();
+            });
+        });
+    };
+
+    var _close = function() {
+        element.fadeOut(300, function() { $(this).remove(); });
+    };
+
+    var _isMaxFilesNumberLimitExceeded = function() {
+        return (options.max_files == null || _numberOfUploadedOrQueued() < options.max_files) ? false : true;
+    };
+
+    var _updateFilesCounter = function() {
+        var text = (options.max_files) ? locale.files_counter.limit : locale.files_counter.default;
+
+        text = text.replace('%files_number%', _numberOfUploadedOrQueued())
+            .replace('%files_number_limit%', options.max_files);
+
+        if (_isMaxFilesNumberLimitExceeded()) {
+            element.find('.booklet-uploader--files-counter').html(text).css({ color: '#d80e24' });
+        } else {
+            element.find('.booklet-uploader--files-counter').html(text).removeAttr('style');
+        }
+    };
+
+    var dialog = $.extend($.Deferred(), {
+        init: init,
+        options: options,
+        locale: locale,
+        element: element,
+    });
+
+    return dialog;
 };
+
+var BookletUploaderFile = function(file_data, template) {
+    var name = file_data.name;
+    var hash = BookletUploaderHelpers.generateHash();
+    var size = file_data.size;
+    var type = file_data.type;
+
+    var file = $.extend($.Deferred(), {
+        name: name,
+        hash: hash,
+        name: name,
+        size: size,
+        type: type,
+        is_stored: false,
+        source: {
+            file: file_data,
+            source: 'local',
+        },
+        element: template.render('#booklet-uploader-file', {
+            file_hash: hash,
+            file_name: name,
+            file_size: BookletUploaderHelpers.sizeToSizeString(size),
+        }),
+        xhr: null,
+        abort: function() {
+            if (this.xhr !== null && this.xhr.readyState !== 4) {
+                this.xhr.abort();
+            }
+        },
+        upload: function(endpoint, storage, transformations = {}) {
+            var data = new FormData();
+
+            data.append('storage', storage);
+            data.append('transformations', transformations);
+            data.append('source', file.source.source);
+            data.append(0, file.source.file, file.name);
+
+            file.element.find('.booklet-uploader--upload-progress').show();
+
+            file.xhr = $.ajax({
+                url: endpoint,
+                method: 'POST',
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                async: true,
+                xhr: function(){
+                    var xhr = $.ajaxSettings.xhr();
+
+                    xhr.upload.addEventListener('progress', function(e){
+                        file.element.find('.booklet-uploader--upload-progress .booklet-uploader--progressbar .booklet-uploader--progress').css({
+                            width: ((e.loaded * 100) / e.total) + '%'
+                        });
+                    });
+
+                    return xhr;
+                },
+            });
+
+            return file.xhr;
+        },
+        delete: function() {
+            file.abort();
+
+            delete this[file.hash];
+
+            file.element.fadeOut(300, function() { $(this).remove(); });
+        },
+        error: function(message) {
+            this.element.find('.booklet-uploader--file-details .booklet-uploader--upload-error').html(message);
+        }
+    });
+
+    return file;
+}

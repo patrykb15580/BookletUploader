@@ -177,7 +177,7 @@
     background-color: #ffffff;
     position: relative;
     width: 100%;
-    height: 60px;
+    height: 70px;
     flex: 0 0 100%;
     align-items: center;
     margin: 0px 0px 6px 0px;
@@ -186,11 +186,14 @@
 }
 
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-preview {
-    display: block;
+    display: flex;
     background-color: #e3e1e2;
-    width: 58px;
-    height: 58px;
-    flex: 0 0 58px;
+    width: 68px;
+    height: 68px;
+    flex: 0 0 68px;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
     overflow: hidden;
 }
 
@@ -259,6 +262,7 @@
     display: flex;
     max-width: 100px;
     flex: 0 0 100px;
+    align-items: flex-start;
     flex-direction: row-reverse;
     padding: 0px 15px;
 }
@@ -269,6 +273,7 @@
     font-size: 20px;
     text-align: center;
     color: #646261;
+    align-self: flex-start;
     margin: 0px 0px 0px 10px;
     padding: 0px;
     border: none;
