@@ -15,7 +15,7 @@ class FTP implements Storage
         $password = Config::get('booklet_uploader_ftp_password');
 
         $this->connection = ftp_connect($ip);
-        $this->login = ftp_login($connection, $login, $password);
+        $this->login = ftp_login($this->connection, $login, $password);
     }
 
     public function upload($source, $destination, $allow_overwrite = false)
@@ -31,7 +31,7 @@ class FTP implements Storage
 
         if ($this->exists($destination) && !$allow_overwrite) {
 
-            return false
+            return false;
         }
 
         return ftp_put($this->connection, $destination, $source, FTP_BINARY);
@@ -42,7 +42,7 @@ class FTP implements Storage
         ftp_chdir($this->connection, '/');
 
         ob_start();
-        $result = $this->download($file_path, "php://output");
+        $result = ftp_get($this->connection, "php://output", $file_path, FTP_BINARY);
         $data = ob_get_contents();
         ob_end_clean();
 

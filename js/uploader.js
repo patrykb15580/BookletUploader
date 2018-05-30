@@ -357,39 +357,43 @@ var BookletUploaderDialog = function(options) {
 
     var _onFilesSelect = function(files) {
         $.each(files, function(i, file_data) {
+            if (_isMaxFilesNumberLimitExceeded()) {
+                return false;
+            }
+
             var file = new BookletUploaderFile(file_data, template);
 
             result[file.hash] = file;
             element.find('.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--files-list').prepend(file.element);
 
-            if (_isMaxFilesNumberLimitExceeded() || !_isFileValid(file)) {
-                file.error(locale.errors.file.max_files_number_exceeded);
-
-                return false;
-            }
-
-            uploaded_or_queued[file.hash] = file;
-            _updateFilesCounter();
-
-            file.upload.call(file, options.endpoint, options.store_to, options.transformations).done(function(file_info) {
-                file_info = $.parseJSON(file_info);
-                file.file_info = file_info;
-                file.is_stored = true;
-
-                if (file_info.preview !== 'undefined' && file_info.preview !== null) {
-                    file.element.find('.booklet-uploader--file-preview').append('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />');
-                }
-
-                file.resolve(file_info);
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                delete uploaded_or_queued[file.hash];
-
-                file.reject(jqXHR).error(locale.errors.upload.default);
-
+            if (_isFileValid(file)) {
+                uploaded_or_queued[file.hash] = file;
                 _updateFilesCounter();
-            }).always(function() {
-                file.element.find('.booklet-uploader--upload-progress').hide();
-            });
+
+                file.upload.call(file, options.endpoint, options.store_to, options.transformations).done(function(file_info) {
+                    file_info = $.parseJSON(file_info);
+                    file.file_info = file_info;
+                    file.is_stored = true;
+
+                    if (file_info.preview !== 'undefined' && file_info.preview !== null) {
+                        $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').on('load', function() {
+                            file.element.find('.booklet-uploader--file-preview').append($(this));
+                        });
+                    }
+
+                    file.resolve(file_info);
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    delete uploaded_or_queued[file.hash];
+
+                    file.reject(jqXHR).error(locale.errors.upload.default);
+
+                    _updateFilesCounter();
+                }).always(function() {
+                    file.element.find('.booklet-uploader--upload-progress').hide();
+                });
+            } else {
+                file.error(locale.errors.file.max_files_number_exceeded);
+            }
         });
     };
 

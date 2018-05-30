@@ -9,35 +9,35 @@ class Uploader
 {
     const DEFAULT_STORAGE = 'ftp';
 
-    private $model_object;
+    private $file_object;
     private $file;
     private $file_name;
     private $source_file_path;
     private $storage;
     private $transformations;
 
-    function __construct($model_object, $file, array $params = [])
+    function __construct($file_object, $file, array $params = [])
     {
-        $model_object, $file, $storage
+        $this->file_object = $file_object;
 
-        $this->model_object = $file_object;
-
-        if (is_array($file)) {
-            $this->file = (isset($file['tmp_name'])) ? $params['file'] : $params['file'][0];
-        } else {
-            $this->file = $params['file'];
-        }
-
-        $this->transformations = $params['transformations'] ?? [];
+        $this->file = (is_array($file) && !isset($file['tmp_name'])) ? $file[0] : $file;
+        $this->source_file_path = $this->file['tmp_name'] ?? $this->file;
 
         $this->file_name = $this->safeFileName($this->file);
-        $this->source_file_path = $this->file['tmp_name'] ?? $this->file;
-        $this->storage = $this->getStorage($params['storage'] ?? self::DEFAULT_STORAGE);
+        $this->storage = self::getStorage($this->file_object->storage ?? null);
+
+        $this->transformations = $params['transformations'] ?? [];
     }
 
     public function upload()
     {
-        return $this->saveOriginalFile();
+        $success = $this->saveOriginalFile();
+
+        if (get_class($this->storage) == 'Booklet\Uploader\Storage\FTP') {
+            $this->storage->close();
+        }
+
+        return $success;
     }
 
     private function saveOriginalFile()
@@ -47,14 +47,14 @@ class Uploader
         }
 
         $path = Config::get('booklet_uploader_original_files_directory');
-        $path .= $this->idToPath() . '/' . $this->safe_file_name;
+        $path .= $this->idToPath() . '/' . $this->file_name;
 
         return $this->storage->upload($this->source_file_path, $path);
     }
 
     private function idToPath()
     {
-        return FilesUntils::objectIdToPath($this->model_object);
+        return FilesUntils::objectIdToPath($this->file_object);
     }
 
     private function safeFileName($file)
@@ -62,7 +62,7 @@ class Uploader
         return StringUntils::sanitizeFileName($file['name'] ?? basename($file));
     }
 
-    private function getStorage($name)
+    public static function getStorage($name = self::DEFAULT_STORAGE)
     {
         switch ($name) {
             case 'ftp':

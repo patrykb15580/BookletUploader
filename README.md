@@ -13,7 +13,7 @@ and run Composer:
 php composer install
 ```
 \
-**Step 2:** Include `uploader.js` file. This makes `booklet_uploader` variable available.
+**Step 2:** Include `uploader.js` file. This makes `BookletUploader` variable available.
 ```html
 <script src="/path/to/plugin/js/uploader.js" charset="utf-8"></script>
 ```
@@ -35,6 +35,17 @@ php composer install
 Open uploader dialog using `openDialog` method on `BookletUploader` variable.
 ```js
 var dialog = BookletUploader.openDialog(Object options);
+```
+\
+Get info of each uploaded file
+```js
+dialog.done(function(files) {
+    $.each(files, function(i, file) {
+        file.done(function(file_info) {
+            // Do something with file
+        });
+    });
+});
 ```
 
 ## Dialog options
