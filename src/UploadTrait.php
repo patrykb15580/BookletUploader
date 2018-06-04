@@ -45,28 +45,16 @@ trait UploadTrait
     public function isImage()
     {
         return in_array($this->type, [
-            'image/gif',
             'image/jpeg',
             'image/png',
-            'application/x-shockwave-flash',
-            'image/psd',
+            'image/svg+xml',
+            'image/gif',
+            'image/tiff',
             'image/bmp',
-            'image/tiff',
-            'image/tiff',
-            'application/octet-stream',
-            'image/jp2',
-            'application/octet-stream',
-            'application/octet-stream',
-            'application/x-shockwave-flash',
-            'image/iff',
-            'image/vnd.wap.wbmp',
-            'image/xbm',
-            'image/vnd.microsoft.icon',
-            'image/webp',
         ]);
     }
 
-    public function isEditable()
+    public function editable()
     {
         return in_array($this->type, [
             'image/jpeg',
@@ -80,7 +68,43 @@ trait UploadTrait
 
     public function preview()
     {
-        return ($this->isImage()) ? $this->originalUrl() : null;
+        // Define previews files paths
+        // Config::set('booklet_uploader_previews_paths', [
+        //     'default' => 'previews_dir/file.svg',
+        //     'application/postscript' => 'previews_dir/ai.svg',
+        //     'application/illustrator' => 'previews_dir/ai.svg',
+        //     'video/x-msvideo' => 'previews_dir/avi.svg',
+        //     'image/x-windows-bmp' => 'previews_dir/bmp.svg',
+        //     'text/css' => 'previews_dir/css.svg',
+        //     'application/msword' => 'previews_dir/doc.svg',
+        //     'application/postscript' => 'previews_dir/eps.svg',
+        //     'image/gif' => 'previews_dir/gif.svg',
+        //     'text/html' => 'previews_dir/html.svg',
+        //     'image/pjpeg' => 'previews_dir/jpg.svg',
+        //     'text/ecmascript' => 'previews_dir/js.svg',
+        //     'x-music/x-midi' => 'previews_dir/midi.svg',
+        //     'video/quicktime' => 'previews_dir/mov.svg',
+        //     'video/x-mpeg' => 'previews_dir/mp3.svg',
+        //     'video/mpeg' => 'previews_dir/mpg.svg',
+        //     'application/pdf' => 'previews_dir/pdf.svg',
+        //     'image/png' => 'previews_dir/png.svg',
+        //     'application/x-mspowerpoint' => 'previews_dir/ppt.svg',
+        //     'application/postscript' => 'previews_dir/ps.svg',
+        //     'application/octet-stream' => 'previews_dir/psd.svg',
+        //     'image/x-tiff' => 'previews_dir/tif.svg',
+        //     'text/plain' => 'previews_dir/txt.svg',
+        //     'application/x-msexcel' => 'previews_dir/xls.svg',
+        //     'text/xml' => 'previews_dir/xml.svg',
+        //     'multipart/x-zip' => 'previews_dir/zip.svg',
+        // ]);
+
+        if ($this->isImage()) {
+            return $this->originalUrl();
+        }
+
+        $previews = Config::get('booklet_uploader_previews_paths');
+
+        return $previews[$this->type] ?? $previews['default'];
     }
 
     public function originalDirectory()

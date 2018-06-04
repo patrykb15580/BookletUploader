@@ -187,7 +187,7 @@
 
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-preview {
     display: flex;
-    background-color: #e3e1e2;
+    background-color: #ffffff;
     width: 68px;
     height: 68px;
     flex: 0 0 68px;
@@ -206,6 +206,7 @@
 }
 
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-details {
+    min-width: 80px;
     flex: 1 1 auto;
     padding: 0px 15px;
     overflow: hidden;
@@ -261,7 +262,7 @@
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-actions {
     display: flex;
     max-width: 100px;
-    flex: 0 0 100px;
+    flex: 1 1 auto;
     align-items: flex-start;
     flex-direction: row-reverse;
     padding: 0px 15px;
