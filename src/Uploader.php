@@ -7,13 +7,16 @@ use StringUntils;
 
 class Uploader
 {
-    const DEFAULT_STORAGE = 'ftp';
+    const FILES_DIRECTORY = 'system/uploader/files/';
 
     private $file_object;
     private $file;
-    private $file_name;
+
     private $source_file_path;
-    private $storage;
+    private $file_directory;
+    private $file_path;
+    private $file_name;
+
     private $transformations;
 
     function __construct($file_object, $file, array $params = [])
@@ -23,36 +26,63 @@ class Uploader
         $this->file = (is_array($file) && !isset($file['tmp_name'])) ? $file[0] : $file;
         $this->source_file_path = $this->file['tmp_name'] ?? $this->file;
 
+        $this->file_directory = $this->directory();
         $this->file_name = $this->safeFileName($this->file);
-        $this->storage = self::getStorage($this->file_object->storage ?? null);
+        $this->file_path = $this->file_directory . '/' . $this->file_name;
 
         $this->transformations = $params['transformations'] ?? [];
     }
 
     public function upload()
     {
-        $success = $this->saveOriginalFile();
+        if ($this->createDirectory($this->file_directory) && $this->copyFile()) {
+            $this->updateFileModelData();
 
-        if (get_class($this->storage) == 'Booklet\Uploader\Storage\FTP') {
-            $this->storage->close();
+            return true;
         }
 
-        return $success;
+        return false;
     }
 
-    private function saveOriginalFile()
+    private function updateFileModelData()
     {
-        if (!file_exists($this->source_file_path)) {
-            throw new \Exception('File missing: ' . $this->source_file_path);
-        }
-
-        $path = Config::get('booklet_uploader_original_files_directory');
-        $path .= $this->idToPath() . '/' . $this->file_name;
-
-        return $this->storage->upload($this->source_file_path, $path);
+        $this->file_object->update([
+            'stored_at' => date(Config::get('mysqltime'))
+        ]);
     }
 
-    private function idToPath()
+    private function copyFile()
+    {
+        if (!rename($this->source_file_path, $this->file_path)) {
+            throw new \Exception('File copy failure.');
+        }
+
+        chmod($this->file_path, 0644);
+
+        return true;
+    }
+
+    private function directory()
+    {
+        return Uploader::FILES_DIRECTORY . $this->idPath();
+    }
+
+    private function createDirectory($directory)
+    {
+        if (file_exists($directory)) {
+            return true;
+        }
+
+        if (!mkdir($directory, 0755, true)) {
+            throw new \Exception('Can\'t create directory ' . $directory . '.');
+        }
+
+        chmod($directory, 0777);
+
+        return true;
+    }
+
+    private function idPath()
     {
         return FilesUntils::objectIdToPath($this->file_object);
     }
@@ -60,28 +90,5 @@ class Uploader
     private function safeFileName($file)
     {
         return StringUntils::sanitizeFileName($file['name'] ?? basename($file));
-    }
-
-    public static function getStorage($name = self::DEFAULT_STORAGE)
-    {
-        switch ($name) {
-            case 'ftp':
-                $storage = new \Booklet\Uploader\Storage\FTP();
-                break;
-
-            case 'local':
-                $storage = new \Booklet\Uploader\Storage\Local();
-                break;
-
-            //default:
-            //    $storage = new \Booklet\Uploader\Storage\Local();
-            //    break;
-        }
-
-        if (empty($storage)) {
-            throw new \Exception('Get upload storage failure');
-        }
-
-        return $storage;
     }
 }

@@ -6,40 +6,16 @@ use PathHelper;
 
 trait UploadTrait
 {
-    public function upload($source, $params = [])
+    public function upload($source_file_path, $params = [])
     {
-        $uploader = new Uploader($this, $source, $params);
+        $uploader = new Uploader($this, $source_file_path, $params);
 
-        if ($uploader->upload()) {
-            $this->update(['stored_at' => date(Config::get('mysqltime'))]);
-
-            return true;
-        }
-
-        return false;
+        return $uploader->upload();
     }
 
     public function getFileContents()
     {
-        $storage = $this->storage();
-        $file_path = $this->originalPath();
-
-        $contents = $storage->getFileContents($file_path);
-
-        if (get_class($storage) == 'Booklet\Uploader\Storage\FTP') {
-            $storage->close();
-        }
-
-        return $contents;
-    }
-
-    private function storage()
-    {
-        if (empty($this->storage)) {
-            throw new \Exception('Storage is not set');
-        }
-
-        return Uploader::getStorage($this->storage);
+        return file_get_contents($this->path());
     }
 
     public function isImage()
@@ -59,9 +35,7 @@ trait UploadTrait
         return in_array($this->type, [
             'image/jpeg',
             'image/png',
-            'image/svg+xml',
             'image/gif',
-            'image/tiff',
             'image/bmp',
         ]);
     }
@@ -99,7 +73,7 @@ trait UploadTrait
         // ]);
 
         if ($this->isImage()) {
-            return $this->originalUrl();
+            return $this->url();
         }
 
         $previews = Config::get('booklet_uploader_previews_paths');
@@ -107,38 +81,19 @@ trait UploadTrait
         return $previews[$this->type] ?? $previews['default'];
     }
 
-    public function originalDirectory()
-    {
-        return Config::get('booklet_uploader_original_files_directory') . $this->idToPath();
-    }
-
-    public function originalPath()
-    {
-        return $this->originalDirectory() . $this->name;
-    }
-
-    public function originalUrl()
-    {
-        return \PathHelper::getUrl('file_show', ['hash' => $this->hash_id]);
-    }
-
     public function directory()
     {
-        if ($this->isImage()) {
-            return Config::get('booklet_uploader_files_directory') . $this->idToPath();
-        }
-
-        return $this->originalDirectory();
+        return Uploader::FILES_DIRECTORY . $this->idToPath();
     }
 
     public function path()
     {
-        return $this->directory() . $this->name;
+        return $this->directory() . '/' . $this->name;
     }
 
     public function url()
     {
-        return \PathHelper::getUrl('file_show', ['hash' => $this->hash_id]);
+        return \PathHelper::url('file_show', ['hash' => $this->hash_id]);
     }
 
     private function idToPath()
