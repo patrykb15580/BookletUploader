@@ -73,12 +73,70 @@ trait UploadTrait
         // ]);
 
         if ($this->isImage()) {
-            return $this->url();
+            $transformations = $this->transformations();
+            $transformations['preview'] = true;
+
+            return $this->transformUrl($transformations);
         }
 
         $previews = Config::get('booklet_uploader_previews_paths');
 
         return $previews[$this->type] ?? $previews['default'];
+    }
+
+    public function transformations()
+    {
+        $transformations = [];
+        if ($this->editable() && $this->modifiers) {
+            foreach (explode('&', $this->modifiers) as $modifier) {
+                $modifier_parts = explode('=', $modifier);
+
+                $name = $modifier_parts[0];
+                if (isset($modifier_parts[1])) {
+                    $params = explode(',', $modifier_parts[1]);
+                    $params = (count($params) > 1) ? $params : $params[0];
+                }
+
+                $transformations[$name] = $params ?? true;
+            }
+        }
+
+        return $transformations;
+    }
+
+    public function transform($transformations = [])
+    {
+        if (!$this->editable() || empty($transformations)) {
+            return null;
+        }
+
+        $modifiers = [];
+        foreach ($transformations as $name => $params) {
+            $modifier = $name;
+
+            if (is_array($params)) {
+                $params = join(',', $params);
+            }
+
+            if ($params && !is_bool($params)) {
+                $modifier .= '=' . $params;
+            }
+
+            $modifiers[] = $modifier;
+        }
+
+        return join('&', $modifiers);
+    }
+
+    public function transformUrl($transformations = [])
+    {
+        $modifiers = $this->transform($transformations);
+
+        if (empty($modifiers)) {
+            return $this->originalUrl();
+        }
+
+        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => $modifiers]);
     }
 
     public function directory()
@@ -91,9 +149,14 @@ trait UploadTrait
         return $this->directory() . '/' . $this->name;
     }
 
-    public function url()
+    public function originalUrl()
     {
         return \PathHelper::url('file_show', ['hash' => $this->hash_id]);
+    }
+
+    public function url()
+    {
+        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => $this->modifiers]);
     }
 
     private function idToPath()

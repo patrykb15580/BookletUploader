@@ -39,7 +39,7 @@ var BookletUploader = (function() {
             max_size: null,
             min_size: null,
         },
-        transformations: {}
+        crop: null,
     };
 
     var openDialog = function(options) {
@@ -370,7 +370,11 @@ var BookletUploaderDialog = function(options) {
                 uploaded_or_queued[file.hash] = file;
                 _updateFilesCounter();
 
-                file.upload.call(file, options.endpoint, options.store_to, options.transformations).done(function(file_info) {
+                var transformations = {
+                    crop: options.crop
+                }
+
+                file.upload.call(file, options.endpoint, options.store_to, transformations).done(function(file_info) {
                     file_info = $.parseJSON(file_info);
                     file.file_info = file_info;
                     file.is_stored = true;
@@ -434,6 +438,14 @@ var BookletUploaderFile = function(file_data, template) {
     var size = file_data.size;
     var type = file_data.type;
 
+    var _appendTransformationsData = function(form_data, transformations) {
+        if (typeof transformations.crop !== 'undefined' && transformations.crop !== null) {
+            form_data.append('transformations[crop]', transformations.crop);
+        }
+
+        return form_data;
+    }
+
     var file = $.extend($.Deferred(), {
         name: name,
         hash: hash,
@@ -459,10 +471,10 @@ var BookletUploaderFile = function(file_data, template) {
         upload: function(endpoint, storage, transformations = {}) {
             var data = new FormData();
 
-            data.append('storage', storage);
-            data.append('transformations', transformations);
             data.append('source', file.source.source);
             data.append(0, file.source.file, file.name);
+
+            data = _appendTransformationsData(data, transformations);
 
             file.element.find('.booklet-uploader--upload-progress').show();
 
