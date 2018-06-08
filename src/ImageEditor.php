@@ -127,7 +127,10 @@ class ImageEditor
     {
         $dim = explode('x', $dim);
 
-        $this->image = $this->image->resize($dim[0], $dim[1], $fit, $scale);
+        $width = empty($dim[0]) ? null : $dim[0];
+        $height = empty($dim[1]) ? null : $dim[1];
+
+        $this->image = $this->image->resize($width, $height, $fit, $scale);
     }
 
     private function crop($dim, $pos)
