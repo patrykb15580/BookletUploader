@@ -7,35 +7,53 @@ class ImageEditor
 {
     private $file;
     private $image;
-    private $transformations;
+    private $modifiers;
 
     function __construct($file, $modifiers = '')
     {
         $this->file = $file;
         $this->image = WideImage::load($file->path());
-        $this->transformations = $this->listTransformations($modifiers);
+        $this->modifiers = $this->listModifiers($modifiers);
     }
 
     public function transform()
     {
-        foreach ($this->transformations as $method => $params) {
+        foreach ($this->modifiers as $method => $params) {
             $this->applyTransformation($method, $params);
         }
 
-        $file_format = pathinfo($this->file->name, PATHINFO_EXTENSION);
-
-        $aditional_param = null;
-        if ($file_format == 'jpg' || $file_format == 'jpeg') {
-            $aditional_param = 100;
-        }
-
-        return $this->image->asString($file_format, $aditional_param);
+        return $this->toString();
     }
 
-    private function applytransformation($method, $params)
+    private function toString()
     {
-        if (is_string($params)) {
-            $params = explode(',', $params);
+        $file_format = pathinfo($this->file->name, PATHINFO_EXTENSION);
+
+        if ($file_format == 'jpg' || $file_format == 'jpeg') {
+            return $this->image->asString('jpg', 100);
+        }
+
+        return $this->image->asString($file_format);
+    }
+
+    private function applyTransformation($method, $params)
+    {
+        if ($method == 'resize') {
+            $dim = $params[0];
+            $fit = $params[1] ?? 'inside';
+            $scale = $params[2] ?? 'any';
+
+            $this->resize($dim, $fit, $scale);
+        }
+
+        if ($method == 'crop') {
+            // If is ratio string
+
+            if (preg_match('/\d:\d/', $params[0])) {
+                $this->cropToRatio($params[0]);
+            } else {
+                $this->crop($params[0], $params[1] ?? '0,0');
+            }
         }
 
         if ($method == 'preview') {
@@ -44,29 +62,6 @@ class ImageEditor
 
         if ($method == 'thumbnail') {
             $this->thumbnail();
-        }
-
-        if ($method == 'resize') {
-            $width = $params[0] ?? null;
-            $height = $params[1] ?? null;
-            $fit = $params[2] ?? 'inside';
-            $scale = $params[3] ?? 'any';
-
-            $this->resize($width, $height, $fit, $scale);
-        }
-
-        if ($method == 'crop') {
-            // If is ratio string
-            if (preg_match('/\d:\d/', $params[0])) {
-                $this->cropToRatio($params[0]);
-            } else {
-                $x = $params[0] ?? 0;
-                $y = $params[1] ?? 0;
-                $width = $params[2];
-                $height = $params[3];
-
-                $this->crop($x, $y, $width, $height);
-            }
         }
 
         if ($method == 'rounded') {
@@ -93,45 +88,54 @@ class ImageEditor
             $this->negative();
         }
 
-        if ($method == 'monochrome') {
-            $this->monochrome();
+        if ($method == 'grayscale') {
+            $this->grayscale();
         }
     }
 
-    private function listTransformations($modifiers)
+    private function listModifiers($modifiers_str)
     {
-        $transformations = [];
-        foreach (explode('&', $modifiers) as $transformation) {
-            $parts = explode('=', $transformation);
+        $modifiers_str = ltrim($modifiers_str, '-/');
 
-            $name = $parts[0];
-            $params = $parts[1] ?? true;
+        $modifiers = [];
+        foreach (explode('-/', $modifiers_str) as $modifier) {
+            $modifier = rtrim($modifier, '/');
+            $params = explode('/', $modifier);
 
-            $transformations[$name] = $params;
+            $name = $params[0];
+            unset($params[0]);
+            $params = array_values($params);
+
+            $modifiers[$name] = $params;
         }
 
-        return $transformations;
+        return $modifiers;
     }
 
     private function preview()
     {
-        $this->resize(600, 600, 'inside', 'down');
+        $this->resize('600x600', 'inside', 'down');
     }
 
     private function thumbnail()
     {
-        $this->resize(100, 100, 'outside');
-        $this->crop('center', 'center', 100, 100);
+        $this->resize('100x100', 'outside');
+        $this->crop('100x100', 'center,center');
     }
 
-    private function resize($width, $height, $fit = 'inside', $scale = 'any')
+    private function resize($dim, $fit = 'inside', $scale = 'any')
     {
-        $this->image = $this->image->resize($width, $height, $fit, $scale);
+        $dim = explode('x', $dim);
+
+        $this->image = $this->image->resize($dim[0], $dim[1], $fit, $scale);
     }
 
-    private function crop($x, $y, $width, $height)
+    private function crop($dim, $pos)
     {
-        $this->image = $this->image->crop($x, $y, $width, $height);
+        $dim = explode('x', $dim);
+        $pos = explode(',', $pos);
+
+        $this->image = $this->image->crop($pos[0], $pos[1], $dim[0], $dim[1]);
     }
 
     private function cropToRatio($target_ratio)
@@ -149,20 +153,14 @@ class ImageEditor
         }
 
         if ($source_ratio > $target_ratio) {
-            $new_width = intval($height * $target_ratio);
-            $new_height = $height;
-
-            $x = ($width - $new_width) / 2;
-            $y = 0;
+            $width = intval($height * $target_ratio);
         } else {
-            $new_width = $width;
-            $new_height = intval($width / $target_ratio);
-
-            $x = 0;
-            $y = ($height - $new_height) / 2;
+            $height = intval($width / $target_ratio);
         }
 
-        $this->crop($x, $y, $new_width, $new_height);
+        $dim = $width . 'x' . $height;
+
+        $this->crop($dim, 'center,center');
     }
 
     private function roundCorners()
@@ -198,7 +196,7 @@ class ImageEditor
         $this->image = $this->image->asNegative();
     }
 
-    private function monochrome()
+    private function grayscale()
     {
         $this->image = $this->image->asGrayscale();
     }
