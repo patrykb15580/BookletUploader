@@ -40,6 +40,21 @@ trait FileTrait
         ]);
     }
 
+    public function imageInfo()
+    {
+        if (!$this->isImage()) {
+            return null;
+        }
+
+        list($width, $height, $type) = getimagesize($this->url());
+
+        return [
+            'width' => $width,
+            'height' => $height,
+            'type' => $type
+        ];
+    }
+
     public function preview()
     {
         // Define previews files paths
