@@ -4,7 +4,7 @@ namespace Booklet\Uploader;
 use Config;
 use PathHelper;
 
-trait UploadTrait
+trait FileTrait
 {
     public function upload($source_file_path, $params = [])
     {
