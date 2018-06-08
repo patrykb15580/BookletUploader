@@ -86,22 +86,44 @@ trait UploadTrait
 
     public function transformations()
     {
-        $transformations = [];
         if ($this->editable() && $this->modifiers) {
-            foreach (explode('&', $this->modifiers) as $modifier) {
-                $modifier_parts = explode('=', $modifier);
+            return self::listTransformationsFromModifiers($this->modifiers);
+        }
 
-                $name = $modifier_parts[0];
-                if (isset($modifier_parts[1])) {
-                    $params = explode(',', $modifier_parts[1]);
-                    $params = (count($params) > 1) ? $params : $params[0];
-                }
+        return [];
+    }
 
-                $transformations[$name] = $params ?? true;
-            }
+    public static function listTransformationsFromModifiers($modifiers)
+    {
+        $modifiers = ltrim($modifiers, '-/');
+
+        $transformations = [];
+        foreach (explode('-/', $modifiers) as $modifier) {
+            $modifier = rtrim($modifier, '/');
+            $params = explode('/', $modifier);
+
+            $name = $params[0];
+            unset($params[0]);
+
+            $transformations[$name] = (empty($params)) ? true : array_values($params);
         }
 
         return $transformations;
+    }
+
+    public function hasTransformation($transformation_name)
+    {
+        if (!$this->editable() || !$this->modifiers) {
+            return false;
+        }
+
+        foreach ($this->transformations() as $name => $params) {
+            if ($name == $transformation_name) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function transform($transformations = [])
@@ -114,27 +136,24 @@ trait UploadTrait
         foreach ($transformations as $name => $params) {
             $modifier = $name;
 
-            if (is_array($params)) {
-                $params = join(',', $params);
+            if (!empty($params) && !is_bool($params)) {
+                $params = (is_array($params)) ? $params : [$params];
+                $modifier .= '/' . join('/', $params);
             }
 
-            if ($params && !is_bool($params)) {
-                $modifier .= '=' . $params;
-            }
-
-            $modifiers[] = $modifier;
+            $modifiers[] = $modifier . '/';
         }
 
-        return join('&', $modifiers);
+        return (empty($modifiers)) ? null : '-/' . join('-/', $modifiers);
     }
 
     public function transformUrl($transformations = [])
     {
-        $modifiers = $this->transform($transformations);
-
-        if (empty($modifiers)) {
+        if (empty($transformations)) {
             return $this->originalUrl();
         }
+
+        $modifiers = $this->transform($transformations);
 
         return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => $modifiers]);
     }
