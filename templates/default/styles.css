@@ -64,10 +64,18 @@
 
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-content {
     display: flex;
+    position: relative;
     flex-direction: column;
     padding: 15px 15px;
     flex: 1 1 auto;
     overflow: hidden;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-content > .booklet-uploader--loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-footer {
@@ -81,6 +89,32 @@
     border-top: 1px solid #cecece;
     overflow: hidden;
 }
+
+@media only screen and (min-width: 576px) {
+
+}
+
+@media only screen and (min-width: 768px) {
+    #booklet-uploader--dialog .booklet-uploader--panel {
+        width: 90vw;
+        max-width: 900px;
+        max-height: 90vh;
+    }
+}
+
+@media only screen and (min-width: 992px) {
+
+}
+
+@media only screen and (min-width: 1200px) {
+
+}
+
+
+
+/*
+ *     Uploader
+ */
 
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--files-counter {
     display: block;
@@ -352,6 +386,165 @@
         flex: 0 0 240px;
     }
 }
+
+/* Uploader end //////////////////////////////////////////////////////////////*/
+
+/*
+ *    Editor
+ */
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--editor-preview {
+    display: flex;
+    position: relative;
+    max-width: 100%;
+    max-height: calc(100% - 60px);
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0px 0px 15px 0px;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--editor-preview > .booklet-uploader--loader {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--editor-preview img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list {
+    display: flex;
+    flex: 0 0 60px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    list-style-type: none;
+    margin: 0px -15px;
+    padding: 15px 0px 0px 0px;
+    border-top: 1px solid #cecece;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--effects-list-item {
+    display: block;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--editor-effect {
+    display: flex;
+    background-color: #ffffff;
+    width: 45px;
+    height: 45px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0px 15px;
+    border: 1px solid #cecece;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--editor-effect:hover {
+    background-color: #e3e1e2;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--editor-effect .booklet-uploader--editor-effect-name {
+    margin: 0px;
+}
+
+@media only screen and (min-width: 576px) {
+
+}
+
+@media only screen and (min-width: 768px) {
+
+}
+
+@media only screen and (min-width: 992px) {
+
+}
+
+@media only screen and (min-width: 1200px) {
+
+}
+
+/* Editor end ////////////////////////////////////////////////////////////////*/
+
+
+
+
+/* Icons */
+.booklet-uploader--icon {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+}
+
+/*.icon.ups {
+    background: url('/public/assets/images/sprite.svg') -160px -640px no-repeat;
+    width: 32px;
+    height: 32px;
+}
+.icon.ups.sm {
+    background: url('/public/assets/images/sprite.svg') calc(-160px * 0.75) calc(-640px * 0.75) no-repeat;
+    background-size: calc(1000px * 0.75) calc(1000px * 0.75);
+    width: 24px;
+    height: 24px;
+}
+.icon.ups.big {
+    background: url('/public/assets/images/sprite.svg') calc(-160px * 1.5) calc(-640px * 1.5) no-repeat;
+    background-size: calc(1000px * 1.5) calc(1000px * 1.5);
+    width: 48px;
+    height: 48px;
+}
+.icon.ups.lg {
+    background: url('/public/assets/images/sprite.svg') calc(-160px * 2) calc(-640px * 2) no-repeat;
+    background-size: calc(1000px * 2) calc(1000px * 2);
+    width: 64px;
+    height: 64px;
+}*/
+
+.booklet-uploader--icon.icon-crop {
+    background: url('../../assets/icons/icons.svg') 0px 0px no-repeat;
+    width: 32px;
+    height: 32px;
+}
+
+.booklet-uploader--icon.icon-rotate {
+    background: url('../../assets/icons/icons.svg') -32px 0px no-repeat;
+    width: 32px;
+    height: 32px;
+}
+
+.booklet-uploader--icon.icon-flip {
+    background: url('../../assets/icons/icons.svg') -64px 0px no-repeat;
+    width: 32px;
+    height: 32px;
+}
+
+.booklet-uploader--icon.icon-mirror {
+    background: url('../../assets/icons/icons.svg') -96px 0px no-repeat;
+    width: 32px;
+    height: 32px;
+}
+
+.booklet-uploader--icon.icon-grayscale {
+    background: url('../../assets/icons/icons.svg') -128px 0px no-repeat;
+    width: 32px;
+    height: 32px;
+}
+
+.booklet-uploader--icon.icon-negative {
+    background: url('../../assets/icons/icons.svg') -160px 0px no-repeat;
+    width: 32px;
+    height: 32px;
+}
+
+
 
 /* Loader */
 #booklet-uploader--dialog .booklet-uploader--loader {

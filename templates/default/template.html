@@ -1,6 +1,5 @@
 <script id="booklet-uploader-panel" type="text/html">
     <div id="booklet-uploader--dialog">
-        <input id="booklet-uploader--files-picker" class="booklet-uploader--files-picker" type="file" />
         <div class="booklet-uploader--panel">
             <div class="booklet-uploader--panel-header">
                 {{{panel_title}}}
@@ -8,32 +7,45 @@
                     <i class="fa fa-times"></i>
                 </button>
             </div>
-            <div class="booklet-uploader--panel-content">
-                <div class="booklet-uploader--drop-area">
-                    <div class="booklet-uploader--drop-area-text">
-                        {{{drop_area}}}
-                    </div>
-                    <label class="booklet-uploader--select-files" for="booklet-uploader--files-picker">
-                        {{{files_picker}}}
-                    </label>
-                    {{#file_size_limit_info}}
-                        <div class="booklet-uploader--max-file-size-info">
-                            {{{file_size_limit_info}}}
-                        </div>
-                    {{/file_size_limit_info}}
-                </div>
-                <ul class="booklet-uploader--files-list"></ul>
-            </div>
+            <div class="booklet-uploader--panel-content"></div>
             <div class="booklet-uploader--panel-footer">
-                <div class="booklet-uploader--files-counter">
-                    {{{files_counter}}}
-                </div>
+                {{#files_counter}}
+                    <div class="booklet-uploader--files-counter">
+                        {{{files_counter}}}
+                    </div>
+                {{/files_counter}}
                 <button class="booklet-uploader--dialog-done">
                     {{{done}}}
                 </button>
             </div>
         </div>
     </div>
+</script>
+
+<script id="booklet-uploader-panel-uploader" type="text/html">
+    <input id="booklet-uploader--files-picker" class="booklet-uploader--files-picker" type="file" />
+    <div class="booklet-uploader--drop-area">
+        <div class="booklet-uploader--drop-area-text">
+            {{{drop_area}}}
+        </div>
+        <label class="booklet-uploader--select-files" for="booklet-uploader--files-picker">
+            {{{files_picker}}}
+        </label>
+        {{#file_size_limit_info}}
+            <div class="booklet-uploader--max-file-size-info">
+                {{{file_size_limit_info}}}
+            </div>
+        {{/file_size_limit_info}}
+    </div>
+    <ul class="booklet-uploader--files-list"></ul>
+</script>
+
+<script id="booklet-uploader-panel-editor" type="text/html">
+    <div class="booklet-uploader--editor-preview">
+        <div class="booklet-uploader--loader lg"></div>
+        <img src="" alt="preview" />
+    </div>
+    <ul class="booklet-uploader--effects-list"></ul>
 </script>
 
 <script id="booklet-uploader-file" type="text/html">
@@ -54,5 +66,13 @@
                 <i class="fa fa-trash"></i>
             </button>
         </div>
+    </li>
+</script>
+
+<script id="booklet-uploader-file-editor-effect-button" type="text/html">
+    <li class="booklet-uploader--effects-list-item">
+        <button class="booklet-uploader--editor-effect {{effect_name}}" data-effect-type="{{effect_name}}" title="{{effect_label}}">
+            <i class="booklet-uploader--icon icon-{{effect_name}}"></i>
+        </button>
     </li>
 </script>

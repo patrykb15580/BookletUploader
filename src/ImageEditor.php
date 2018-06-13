@@ -5,6 +5,13 @@ use WideImage\WideImage as WideImage;
 
 class ImageEditor
 {
+    const VALID_FORMATS = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/bmp',
+    ];
+
     private $file;
     private $image;
     private $modifiers;
@@ -29,11 +36,36 @@ class ImageEditor
     {
         $file_format = pathinfo($this->file->name, PATHINFO_EXTENSION);
 
-        if ($file_format == 'jpg' || $file_format == 'jpeg') {
+        if ($this->isJPG()) {
             return $this->image->asString('jpg', 100);
         }
 
         return $this->image->asString($file_format);
+    }
+
+    private function hasValidFormat()
+    {
+        return in_array($this->file->type, self::VALID_FORMATS);
+    }
+
+    private function isJPG()
+    {
+        return ($this->file->type == 'image/jpeg') ? true : false;
+    }
+
+    private function isPNG()
+    {
+        return ($this->file->type == 'image/png') ? true : false;
+    }
+
+    private function isGIF()
+    {
+        return ($this->file->type == 'image/gif') ? true : false;
+    }
+
+    private function isBMP()
+    {
+        return ($this->file->type == 'image/bmp') ? true : false;
     }
 
     private function applyTransformation($method, $params)
@@ -80,8 +112,8 @@ class ImageEditor
             $this->flip();
         }
 
-        if ($method == 'flop') {
-            $this->flop();
+        if ($method == 'mirror') {
+            $this->mirror();
         }
 
         if ($method == 'negative') {
@@ -189,7 +221,7 @@ class ImageEditor
         $this->image = $this->image->flip();
     }
 
-    private function flop()
+    private function mirror()
     {
         $this->image = $this->image->mirror();
     }
