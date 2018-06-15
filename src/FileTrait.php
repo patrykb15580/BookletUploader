@@ -46,13 +46,36 @@ trait FileTrait
             return null;
         }
 
-        list($width, $height, $type) = getimagesize($this->url());
+        list($width, $height) = getimagesize($this->url());
 
+        return ['width' => $width, 'height' => $height];
+    }
+
+    public function info()
+    {
         return [
-            'width' => $width,
-            'height' => $height,
-            'type' => $type
+            'hash' => $this->hash_id,
+            'name' => $this->name,
+            'type' => $this->type,
+            'size' => $this->size,
+            'source' => $this->source,
+            'modifiers' => $this->modifiers,
+            'preview' => $this->preview(),
+            'url' => $this->url(),
+            'original_url' => $this->originalUrl(),
+            'is_image' => $this->isImage(),
+            'image_info' => $this->imageInfo(),
         ];
+    }
+
+    public function isStored()
+    {
+        return ($this->stored_at && !$this->isDeleted()) ? true : false;
+    }
+
+    public function isDeleted()
+    {
+        return ($this->deleted_at) ? true : false;
     }
 
     public function preview()
@@ -185,12 +208,12 @@ trait FileTrait
 
     public function originalUrl()
     {
-        return \PathHelper::url('file_show', ['hash' => $this->hash_id]);
+        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => 'original']);
     }
 
     public function url()
     {
-        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => $this->modifiers]);
+        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => $this->modifiers ?? 'original']);
     }
 
     private function idToPath()

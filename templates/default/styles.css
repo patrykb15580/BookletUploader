@@ -393,18 +393,34 @@
  *    Editor
  */
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--editor-preview {
-    display: flex;
-    position: relative;
-    max-width: 100%;
-    max-height: calc(100% - 60px);
-    flex: 1 1 auto;
-    align-items: center;
-    justify-content: center;
-    padding: 0px 0px 15px 0px;
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--editor-preview > .booklet-uploader--loader {
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor,
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-preview,
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-wrapper {
+    display: flex;
+    position: relative;
+    width: 100%;
+    flex: 1 1 auto;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-preview > .booklet-uploader--loader {
     display: block;
     position: absolute;
     top: 50%;
@@ -412,28 +428,35 @@
     transform: translate(-50%, -50%);
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--editor-preview img {
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-preview img {
     max-width: 100%;
     max-height: 100%;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list {
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-wrapper img {
+    max-width: none;
+    min-height: 100%;
+}
+
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu,
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu {
     display: flex;
+    width: calc(100% + 30px);
     flex: 0 0 60px;
-    flex-direction: row;
-    align-items: center;
     justify-content: center;
-    list-style-type: none;
-    margin: 0px -15px;
-    padding: 15px 0px 0px 0px;
+    align-items: center;
+    margin: 15px 0px 0px 0px;
+    padding: 15px 15px 0px 15px;
     border-top: 1px solid #cecece;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--effects-list-item {
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu .menu-item,
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu .menu-item {
     display: block;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--editor-effect {
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu .menu-action-button,
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu .menu-action-button {
     display: flex;
     background-color: #ffffff;
     width: 45px;
@@ -448,12 +471,9 @@
     transition: background-color 0.2s;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--editor-effect:hover {
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu .menu-action-button:hover,
+#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu .menu-action-button:hover {
     background-color: #e3e1e2;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--effects-list .booklet-uploader--editor-effect .booklet-uploader--editor-effect-name {
-    margin: 0px;
 }
 
 @media only screen and (min-width: 576px) {

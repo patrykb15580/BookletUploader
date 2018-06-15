@@ -41,11 +41,30 @@
 </script>
 
 <script id="booklet-uploader-panel-editor" type="text/html">
-    <div class="booklet-uploader--editor-preview">
-        <div class="booklet-uploader--loader lg"></div>
-        <img src="" alt="preview" />
+    <div class="booklet-uploader--file-editor">
+        <div class="view-editor">
+            <div class="editor-preview">
+                <div class="booklet-uploader--loader lg"></div>
+                <img src="" alt="" />
+            </div>
+            <ul class="editor-menu"></ul>
+        </div>
+        <div class="view-cropper">
+            <div class="cropper-wrapper"></div>
+            <ul class="cropper-menu">
+                <li class="menu-item">
+                    <button class="menu-action-button action-done">
+                        <i class="fa fa-check"></i>
+                    </button>
+                </li>
+                <li class="menu-item">
+                    <button class="menu-action-button action-reject">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </li>
+            </ul>
+        </div>
     </div>
-    <ul class="booklet-uploader--effects-list"></ul>
 </script>
 
 <script id="booklet-uploader-file" type="text/html">
@@ -69,9 +88,9 @@
     </li>
 </script>
 
-<script id="booklet-uploader-file-editor-effect-button" type="text/html">
-    <li class="booklet-uploader--effects-list-item">
-        <button class="booklet-uploader--editor-effect {{effect_name}}" data-effect-type="{{effect_name}}" title="{{effect_label}}">
+<script id="booklet-uploader-file-editor-menu-item" type="text/html">
+    <li class="menu-item">
+        <button class="menu-action-button action-{{effect_name}}" data-effect-type="{{effect_name}}" title="{{effect_label}}">
             <i class="booklet-uploader--icon icon-{{effect_name}}"></i>
         </button>
     </li>

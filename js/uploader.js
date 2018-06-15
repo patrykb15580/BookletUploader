@@ -187,8 +187,8 @@ var BookletUploader = (function() {
                 effects: {
                     crop: 'Kadrowanie',
                     rotate: 'Obrót',
-                    flip: 'Odbicie pionowe',
-                    mirror: 'Odbicie poziome',
+                    flip: 'Odbicie poziome',
+                    mirror: 'Odbicie pionowe',
                     grayscale: 'Szarość',
                     negative: 'Negatyw',
                 },
@@ -297,12 +297,19 @@ var BookletUploaderPanel = function(options) {
 }
 
 var BookletUploaderDialog = function(panel) {
+    if (!panel.options.endpoint) {
+        throw 'endpoint in not defined';
+    }
+
     var options = panel.options;
     var locale = panel.locale;
+
+    var uploader = $.Deferred();
 
     var uploaded_or_queued = {};
     var result = {};
     var element = null;
+
     var validators = {
         type: function(file) {
 
@@ -330,8 +337,6 @@ var BookletUploaderDialog = function(panel) {
         },
         maxSize: function(file) {
             if (options.validations.max_size !== null && file.size > options.validations.max_size) {
-                console.log('max size');
-
                 file.error.call(file, locale.errors.file.max_size_exceeded);
 
                 return false;
@@ -341,8 +346,6 @@ var BookletUploaderDialog = function(panel) {
         },
         minSize: function(file) {
             if (options.validations.min_size !== null && file.size < options.validations.min_size) {
-                console.log('min size');
-
                 file.error.call(file, locale.errors.file.min_size_exceeded);
 
                 return false;
@@ -418,7 +421,7 @@ var BookletUploaderDialog = function(panel) {
         panel.done(function() {
             var results = [];
 
-            dialog.resolve(Object.values(result));
+            uploader.resolve(Object.values(result));
         });
 
         panel.fail(function() {
@@ -426,7 +429,7 @@ var BookletUploaderDialog = function(panel) {
                 result.abort();
             }
 
-            dialog.reject();
+            uploader.reject();
         });
 
         panel.element.on('dragover', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area', function(e) {
@@ -506,8 +509,8 @@ var BookletUploaderDialog = function(panel) {
                     crop: options.crop
                 }
 
-                file.upload.call(file, options.endpoint, options.store_to, transformations).done(function(file_info) {
-                    file_info = $.parseJSON(file_info);
+                file.upload.call(file, options.endpoint, options.store_to, transformations);
+                file.done(function(file_info) {
                     file.file_info = file_info;
                     file.is_stored = true;
 
@@ -516,12 +519,10 @@ var BookletUploaderDialog = function(panel) {
                             file.element.find('.booklet-uploader--file-preview').append($(this));
                         });
                     }
-
-                    file.resolve(file_info);
                 }).fail(function(jqXHR, textStatus, errorThrown) {
                     delete uploaded_or_queued[file.hash];
 
-                    file.reject(jqXHR).error(locale.errors.upload.default);
+                    file.error(locale.errors.upload.default);
 
                     _updateFilesCounter();
                 }).always(function() {
@@ -554,14 +555,7 @@ var BookletUploaderDialog = function(panel) {
         _renderUploader();
     });
 
-    var dialog = $.Deferred();
-    dialog.promise();
-    dialog = $.extend(dialog, {
-        options: options,
-        locale: locale
-    });
-
-    return dialog;
+    return uploader;
 };
 
 var BookletUploaderFileEditor = function(panel, file_hash) {
@@ -569,13 +563,17 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         throw 'file_hash in not defined';
     }
 
+    var file = null;
     var effects = ['crop', 'rotate', 'mirror', 'flip', 'grayscale', 'negative'];
 
-    var original_url = 'http://kreator.fotobum.test/file/' + file_hash;
     var options = $.extend({ effects: effects }, panel.options);
     var locale = panel.locale;
 
     var panel_elements = {};
+
+    var editor = $.Deferred();
+    editor.promise();
+    editor = $.extend(editor, {});
 
     var effects = {
         applied: {},
@@ -583,16 +581,14 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
             return (BookletUploaderHelpers.isVarEmpty(effects.applied[effect])) ? false : true;
         },
         applyEffect: function(effect, params = true) {
-            effects.applied[effect] = params;
+            this.applied[effect] = params;
 
             _onEffectChange();
         },
         removeEffect: function(effect) {
-            if (effects.applied.hasOwnProperty(effect)) {
-                delete effects.applied[effect];
+            delete this.applied[effect]
 
-                _onEffectChange();
-            }
+            _onEffectChange();
         },
         disableEffect: function(effect) {
             effects.applied[effect] = false;
@@ -601,7 +597,17 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         },
         operations: {
             crop: function() {
-                console.log('crop');
+                var aspect_ratio = eval(String(options.crop).replace(':', '/'));
+
+                var cropper = new _cropper(aspect_ratio);
+                cropper.done(function(data) {
+                    var dim = data.width + 'x' + data.height;
+                    var pos = data.x + ',' + data.y;
+
+                    effects.applyEffect('crop', [dim, pos]);
+                }).always(function() {
+                    cropper = null;
+                });
             },
             rotate: function() {
                 var current_angle = 0;
@@ -661,7 +667,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         panel.element.find('.booklet-uploader--panel-content').append(panel_content);
 
         for (var i = 0; i < options.effects.length; i++) {
-            panel.element.find('.booklet-uploader--effects-list').append(_renderEffectButton(options.effects[i]));
+            panel.element.find('.booklet-uploader--file-editor .view-editor .editor-menu').append(_renderEffectButton(options.effects[i]));
         }
 
         panel.html = panel.element[0].outerHTML;
@@ -671,12 +677,20 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         }, function() {
             panel_elements = {
                 container: panel.element,
-                preview: {
-                    container: panel.element.find('.booklet-uploader--editor-preview'),
-                    image: panel.element.find('.booklet-uploader--editor-preview img').hide(),
-                    loader: panel.element.find('.booklet-uploader--editor-preview .booklet-uploader--loader').hide(),
+                editor: {
+                    container: panel.element.find('.booklet-uploader--file-editor .view-editor'),
+                    preview: {
+                        container: panel.element.find('.booklet-uploader--file-editor .view-editor .editor-preview'),
+                        image: panel.element.find('.booklet-uploader--file-editor .view-editor .editor-preview img').hide(),
+                        loader: panel.element.find('.booklet-uploader--file-editor .view-editor .booklet-uploader--loader').hide(),
+                    },
+                    menu: panel.element.find('.booklet-uploader--file-editor .view-editor .editor-menu'),
                 },
-                effects_list: panel.element.find('.booklet-uploader--effects-list'),
+                cropper: {
+                    container: panel.element.find('.booklet-uploader--file-editor .view-cropper').hide(),
+                    wrapper: panel.element.find('.booklet-uploader--file-editor .view-cropper .cropper-wrapper'),
+                    menu: panel.element.find('.booklet-uploader--file-editor .view-cropper .cropper-menu'),
+                }
             }
 
             _refreshPreview();
@@ -687,7 +701,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
     var _renderEffectButton = function(effect_name) {
         var effect_label = locale.effects[effect_name];
 
-        var button_html = panel.template.getSection('#booklet-uploader-file-editor-effect-button');
+        var button_html = panel.template.getSection('#booklet-uploader-file-editor-menu-item');
         var button = panel.template.render(button_html, {
             effect_name: effect_name,
             effect_label: effect_label
@@ -699,46 +713,69 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
     var _refreshPreview = function() {
         var url = _generateModifiedUrl();
 
-        panel_elements.preview.image.fadeOut(200, function() {
-            panel_elements.preview.loader.fadeIn(200);
+        panel_elements.editor.preview.image.fadeOut(200, function() {
+            panel_elements.editor.preview.loader.fadeIn(200);
 
             $(this).attr({ src: url }).on('load', function() {
-                panel_elements.preview.loader.fadeOut(200, function() {
-                    panel_elements.preview.image.fadeIn(200);
+                panel_elements.editor.preview.loader.fadeOut(200, function() {
+                    panel_elements.editor.preview.image.fadeIn(200);
                 });
             });
         });
     }
 
     var _bindEvents = function() {
-        panel_elements.effects_list.on('click', '.booklet-uploader--editor-effect', function() {
+        panel_elements.editor.menu.on('click', '.menu-action-button', function() {
             var operation = $(this).data('effect-type');
 
             if (effects.operations.hasOwnProperty(operation)) {
                 effects.operations[operation]();
             }
         });
+
+        panel.done(function() {
+            var result = $.Deferred();
+            result.promise();
+
+            var modifiers = _modifiersStringBuilder(effects.applied);
+
+            $.post('/file/' + file.hash, { file: { modifiers: modifiers } }, function(response) {
+                result.resolve(response.data);
+            }, 'json').fail(function() {
+                result.reject();
+            });
+
+            editor.resolve(result);
+        });
+
+        panel.fail(function() { editor.reject(); });
     }
 
     var _onEffectChange = function() {
         _refreshPreview();
     };
 
-    var _modifiersStringBuilder = function() {
+    var _modifiersStringBuilder = function(operations) {
         var modifiers = [];
-        var applied_effects = effects.applied;
+        var modifiers_order = ['crop', 'rotate', 'flip', 'mirror', 'grayscale', 'negative'];
 
-        for (var effect in applied_effects) {
+        for (var i = 0; i < modifiers_order.length; i++) {
+            var effect = modifiers_order[i];
+
+            if (!operations.hasOwnProperty(effect)) {
+                continue;
+            }
+
             var modifier = [effect];
-            var params = applied_effects[effect];
+            var params = operations[effect];
 
             if (params === false) {
                 continue;
             }
 
             if (Array.isArray(params) && params.length > 0) {
-                for (var i = 0; i < params.length; i++) {
-                    modifier.push(params[i]);
+                for (var a = 0; a < params.length; a++) {
+                    modifier.push(params[a]);
                 }
             }
 
@@ -753,29 +790,79 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
     }
 
     var _generateModifiedUrl = function() {
-        var url = original_url;
-        var modifiers = _modifiersStringBuilder();
+        var url = file.original_url;
+        var modifiers = _modifiersStringBuilder(effects.applied);
 
         url += (modifiers == '') ? '' : '/' + modifiers;
 
         return url;
     }
 
-    var _openCropper = function() {
+    var _cropper = function(aspect_ratio = null) {
+        panel_elements.cropper.wrapper.empty();
 
+        panel_elements.editor.container.hide();
+        panel_elements.cropper.container.show();
+
+        var cropper = $.Deferred();
+        cropper.promise();
+        cropper.url = _generateModifiedUrl();
+        cropper.element = $('<img src="' + file.original_url + '" alt="" />');
+        cropper.cropper = new Cropper(cropper.element[0], {
+            aspectRatio: aspect_ratio,
+            autoCropArea: 1,
+            dragMode: 'move',
+            restore: false,
+            viewMode: 1,
+            movable: false,
+            rotatable: false,
+            scalable: false,
+            zoomable: false,
+            zoomOnTouch: false,
+            zoomOnWheel: false,
+            toggleDragModeOnDblclick: false,
+            responsive: true,
+        });
+        cropper.getData = function() { return this.cropper.getData(true); };
+        cropper.close = function() {
+            this.cropper.destroy();
+            this.element.remove();
+
+            panel_elements.cropper.container.hide();
+            panel_elements.editor.container.show();
+        };
+
+        panel_elements.cropper.wrapper.append(cropper.element);
+
+
+        cropper.always(function() { cropper.close(); });
+        cropper.fail(function() {  });
+
+        panel_elements.cropper.menu.on('click', '.menu-action-button.action-done', function() {
+            cropper.resolve(cropper.getData());
+        });
+
+        panel_elements.cropper.menu.on('click', '.menu-action-button.action-reject', function() {
+            cropper.reject();
+        });
+
+        return cropper;
     }
 
-    panel.template.done(function() {
-        _renderEditor();
+    // Init editor
+    $.get('/file/' + file_hash, function(response) {
+        file = response.data;
 
-        if (options.crop) {
-            effects.applyEffect('crop', [options.crop]);
-        }
+        panel.template.done(function() {
+            _renderEditor();
+
+            if (options.crop) {
+                effects.applyEffect('crop', [options.crop]);
+            }
+        });
+    }, 'json').fail(function() {
+        throw 'Get file data error';
     });
-
-    var editor = $.Deferred();
-    editor.promise();
-    editor = $.extend(editor, {});
 
     return editor;
 }
@@ -845,9 +932,13 @@ var BookletUploaderFile = function(file_data, template) {
 
                     return xhr;
                 },
-            });
+            }).done(function(response) {
+                response =  $.parseJSON(response);
 
-            return file.xhr;
+                file.resolve(response.data);
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                file.reject(jqXHR, textStatus, errorThrown);
+            });
         },
         delete: function() {
             file.abort();
