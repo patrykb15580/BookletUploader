@@ -909,7 +909,7 @@ var BookletUploaderFile = function(file_data, template) {
             transformations.crop = false;
         }
 
-        if (transformations.crop !== null) {
+        if (transformations.crop) {
             form_data.append('transformations[crop]', transformations.crop);
         }
 
