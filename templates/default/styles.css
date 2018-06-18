@@ -65,6 +65,8 @@
 #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-content {
     display: flex;
     position: relative;
+    width: 100%;
+    height: calc(100% - 150px);
     flex-direction: column;
     padding: 15px 15px;
     flex: 1 1 auto;
@@ -414,7 +416,10 @@
     display: flex;
     position: relative;
     width: 100%;
-    flex: 1 1 auto;
+    height: calc(100% - 76px);
+    min-width: 0;
+    min-height: 0;
+    flex: 1 0 auto;
     justify-content: center;
     align-items: center;
     overflow: hidden;

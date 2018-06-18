@@ -312,7 +312,6 @@ var BookletUploaderDialog = function(panel) {
 
     var validators = {
         type: function(file) {
-
             if (options.validations.type == '' || options.validations.type == null) { return true; }
 
             var allowed_types = options.validations.type.replace(' ', '').split(',');
@@ -493,6 +492,8 @@ var BookletUploaderDialog = function(panel) {
     var _onFilesSelect = function(files) {
         $.each(files, function(i, file_data) {
             if (_isMaxFilesNumberLimitExceeded()) {
+                file.error(locale.errors.file.max_files_number_exceeded);
+
                 return false;
             }
 
@@ -528,8 +529,6 @@ var BookletUploaderDialog = function(panel) {
                 }).always(function() {
                     file.element.find('.booklet-uploader--upload-progress').hide();
                 });
-            } else {
-                file.error(locale.errors.file.max_files_number_exceeded);
             }
         });
     };
@@ -578,7 +577,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
     var effects = {
         applied: {},
         isEffectActive: function(effect) {
-            return (BookletUploaderHelpers.isVarEmpty(effects.applied[effect])) ? false : true;
+            return !BookletUploaderHelpers.isVarEmpty(effects.applied[effect]);
         },
         applyEffect: function(effect, params = true) {
             this.applied[effect] = params;
@@ -595,9 +594,39 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
 
             _onEffectChange();
         },
+        applyDefaultEffects: function() {
+            var aspect_ratio = (options.crop && options.crop == 'free') ? options.crop.replace(/[\\,:]/g, '/') : false;
+
+            aspect_ratio = '1/1';
+
+            if (aspect_ratio) {
+                var source_width = file.image_info.width, width = source_width;
+                var source_height = file.image_info.height, height = source_height;
+
+                var x = 0;
+                var y = 0;
+
+                var source_ratio = width / height;
+
+                var target_ratio = eval(aspect_ratio);
+
+                if (source_ratio == target_ratio) {
+                    if (source_ratio > target_ratio) {
+                        width = height * target_ratio;
+                        x = (source_width - width) / 2;
+                    } else {
+                        image_height = width / target_ratio;
+                        y = (source_height - height) / 2;
+                    }
+
+                    effects.applyEffect('crop', [width + 'x' + height, x + ',' + y]);
+                }
+            }
+        },
         operations: {
             crop: function() {
-                var aspect_ratio = eval(String(options.crop).replace(':', '/'));
+                var aspect_ratio = String(options.crop).replace('/[\\,:]/g', '/');
+                aspect_ratio = (aspect_ratio == 'free') ? null : eval(aspect_ratio);
 
                 var cropper = new _cropper(aspect_ratio);
                 cropper.done(function(data) {
@@ -713,6 +742,8 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
     var _refreshPreview = function() {
         var url = _generateModifiedUrl();
 
+        console.log(url);
+
         panel_elements.editor.preview.image.fadeOut(200, function() {
             panel_elements.editor.preview.loader.fadeIn(200);
 
@@ -757,7 +788,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
 
     var _modifiersStringBuilder = function(operations) {
         var modifiers = [];
-        var modifiers_order = ['crop', 'rotate', 'flip', 'mirror', 'grayscale', 'negative'];
+        var modifiers_order = ['crop', 'resize', 'rotate', 'flip', 'mirror', 'grayscale', 'negative'];
 
         for (var i = 0; i < modifiers_order.length; i++) {
             var effect = modifiers_order[i];
@@ -790,15 +821,17 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
     }
 
     var _generateModifiedUrl = function() {
-        var url = file.original_url;
-        var modifiers = _modifiersStringBuilder(effects.applied);
+        var applied_effects = $.extend(true, {}, effects.applied);
+        applied_effects.resize = ['900x900'];
 
-        url += (modifiers == '') ? '' : '/' + modifiers;
+        var url = file.original_url.replace('original', _modifiersStringBuilder(applied_effects));
 
         return url;
     }
 
     var _cropper = function(aspect_ratio = null) {
+        var url = file.original_url;
+
         panel_elements.cropper.wrapper.empty();
 
         panel_elements.editor.container.hide();
@@ -807,7 +840,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         var cropper = $.Deferred();
         cropper.promise();
         cropper.url = _generateModifiedUrl();
-        cropper.element = $('<img src="' + file.original_url + '" alt="" />');
+        cropper.element = $('<img src="' + url + '" alt="" />');
         cropper.cropper = new Cropper(cropper.element[0], {
             aspectRatio: aspect_ratio,
             autoCropArea: 1,
@@ -856,9 +889,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         panel.template.done(function() {
             _renderEditor();
 
-            if (options.crop) {
-                effects.applyEffect('crop', [options.crop]);
-            }
+            effects.applyDefaultEffects();
         });
     }, 'json').fail(function() {
         throw 'Get file data error';
@@ -874,7 +905,11 @@ var BookletUploaderFile = function(file_data, template) {
     var type = file_data.type;
 
     var _appendTransformationsData = function(form_data, transformations) {
-        if (typeof transformations.crop !== 'undefined' && transformations.crop !== null) {
+        if (typeof transformations.crop == 'undefined' || transformations.crop == 'free') {
+            transformations.crop = false;
+        }
+
+        if (transformations.crop !== null) {
             form_data.append('transformations[crop]', transformations.crop);
         }
 
