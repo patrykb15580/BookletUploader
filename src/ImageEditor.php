@@ -12,24 +12,55 @@ class ImageEditor
         'image/bmp',
     ];
 
+    const TEMP_FILES_DIR = 'system/uploader/temp/';
+
     private $file;
+    private $file_path;
+    private $temp_file_path;
     private $image;
     private $modifiers;
 
     function __construct($file, $modifiers = '')
     {
         $this->file = $file;
-        $this->image = WideImage::load($file->path());
+        $this->file_path = $file->path();
+
+        $signature = md5($this->file->hash_id . '/' . $modifiers);
+        $extension = pathinfo($this->file->name, PATHINFO_EXTENSION);
+
+        $this->temp_file_path = self::TEMP_FILES_DIR . $signature . '.' . $extension;
+
+        $this->image = WideImage::load($this->file_path);
+
         $this->modifiers = $this->listModifiers($modifiers);
     }
 
     public function transform()
     {
+        if (file_exists($this->temp_file_path)) {
+            return $this->temp_file_path;
+        }
+
         foreach ($this->modifiers as $method => $params) {
             $this->applyTransformation($method, $params);
         }
 
-        return $this->toString();
+        return ($this->save()) ? $this->temp_file_path : false;
+    }
+
+    private function save()
+    {
+        $directory = self::TEMP_FILES_DIR;
+
+        if (!file_exists($directory) && !mkdir($directory, 0755, true)) {
+            return false;
+        }
+
+        chmod($directory, 0777);
+
+        $this->image->saveToFile($this->temp_file_path);
+
+        return file_exists($this->temp_file_path);
     }
 
     private function toString()
@@ -71,25 +102,15 @@ class ImageEditor
     private function applyTransformation($method, $params)
     {
         if ($method == 'resize') {
-            $dim = $params[0];
-            $fit = $params[1] ?? 'inside';
-            $scale = $params[2] ?? 'any';
-
-            $this->resize($dim, $fit, $scale);
+            $this->resize($params[0], $params[1] ?? 'inside', $params[2] ?? 'any');
         }
 
         if ($method == 'crop') {
-            // If is ratio string
-
-            if (preg_match('/\d:\d/', $params[0])) {
-                $this->cropToRatio($params[0]);
-            } else {
-                $this->crop($params[0], $params[1] ?? '0,0');
-            }
+            $this->crop($params[0], $params[1]);
         }
 
         if ($method == 'preview') {
-            $this->preview();
+            $this->preview($params[0] ?? '600x600');
         }
 
         if ($method == 'thumbnail') {
@@ -144,9 +165,9 @@ class ImageEditor
         return $modifiers;
     }
 
-    private function preview()
+    private function preview($size)
     {
-        $this->resize('600x600', 'inside', 'down');
+        $this->resize($size, 'inside', 'down');
     }
 
     private function thumbnail()
@@ -155,22 +176,27 @@ class ImageEditor
         $this->crop('100x100', 'center,center');
     }
 
-    private function resize($dim, $fit = 'inside', $scale = 'any')
+    private function resize($size, $fit = 'inside', $scale = 'any')
     {
-        $dim = explode('x', $dim);
-
-        $width = empty($dim[0]) ? null : $dim[0];
-        $height = empty($dim[1]) ? null : $dim[1];
+        list($width, $height) = explode('x', $size);
 
         $this->image = $this->image->resize($width, $height, $fit, $scale);
+
+        //$box = new ImagineBox($width, $height);
+        //$this->image->resize($box, ImagineImageInterface::FILTER_LANCZOS);
     }
 
-    private function crop($dim, $pos)
+    private function crop($size, $pos)
     {
-        $dim = explode('x', $dim);
-        $pos = explode(',', $pos);
+        list($width, $height) = explode('x', $size);
+        list($x, $y) = explode(',', $pos);
 
-        $this->image = $this->image->crop($pos[0], $pos[1], $dim[0], $dim[1]);
+        //$point = new ImaginePoint($x, $y);
+        //$box = new ImagineBox($width, $height);
+        //
+        //$this->image->crop($point, $box);
+
+        $this->image = $this->image->crop($x, $y, $width, $height);
     }
 
     private function cropToRatio($target_ratio)
