@@ -112,7 +112,7 @@ trait FileTrait
 
         if ($this->isImage()) {
             $transformations = $this->transformations();
-            $transformations['preview'] = true;
+            $transformations['preview'] = '120x120';
 
             return $this->transformUrl($transformations);
         }
@@ -124,11 +124,7 @@ trait FileTrait
 
     public function transformations()
     {
-        if ($this->editable() && $this->modifiers) {
-            return self::listTransformationsFromModifiers($this->modifiers);
-        }
-
-        return [];
+        return ($this->editable()) ? self::listTransformationsFromModifiers($this->modifiers) : [];
     }
 
     public static function listTransformationsFromModifiers($modifiers)
@@ -166,23 +162,27 @@ trait FileTrait
 
     public function transform($transformations = [])
     {
+        $modifiers = [];
+
         if (!$this->editable() || empty($transformations)) {
-            return null;
+            return '';
         }
 
-        $modifiers = [];
-        foreach ($transformations as $name => $params) {
-            $modifier = $name;
-
-            if (!empty($params) && !is_bool($params)) {
-                $params = (is_array($params)) ? $params : [$params];
-                $modifier .= '/' . join('/', $params);
+        foreach ($transformations as $effect => $params) {
+            if ($params == false) {
+                continue;
             }
 
-            $modifiers[] = $modifier . '/';
+            $modifier = $effect . '/';
+
+            if (is_array($params) && !empty($params)) {
+                $modifier .= join('/', $params) . '/';
+            }
+
+            $modifiers[] = $modifier;
         }
 
-        return (empty($modifiers)) ? null : '-/' . join('-/', $modifiers);
+        return (empty($modifiers)) ? '' : '-/' . join('-/', $modifiers);
     }
 
     public function transformUrl($transformations = [])
@@ -203,17 +203,17 @@ trait FileTrait
 
     public function path()
     {
-        return $this->directory() . '/' . $this->name;
+        return $this->directory() . $this->name;
     }
 
     public function originalUrl()
     {
-        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => 'original']);
+        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => '']);
     }
 
     public function url()
     {
-        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => $this->modifiers ?? 'original']);
+        return \PathHelper::url('file_show', ['hash' => $this->hash_id, 'modifiers' => $this->modifiers ?? '']);
     }
 
     private function idToPath()

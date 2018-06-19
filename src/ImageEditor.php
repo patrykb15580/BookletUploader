@@ -181,9 +181,6 @@ class ImageEditor
         list($width, $height) = explode('x', $size);
 
         $this->image = $this->image->resize($width, $height, $fit, $scale);
-
-        //$box = new ImagineBox($width, $height);
-        //$this->image->resize($box, ImagineImageInterface::FILTER_LANCZOS);
     }
 
     private function crop($size, $pos)
@@ -191,37 +188,7 @@ class ImageEditor
         list($width, $height) = explode('x', $size);
         list($x, $y) = explode(',', $pos);
 
-        //$point = new ImaginePoint($x, $y);
-        //$box = new ImagineBox($width, $height);
-        //
-        //$this->image->crop($point, $box);
-
         $this->image = $this->image->crop($x, $y, $width, $height);
-    }
-
-    private function cropToRatio($target_ratio)
-    {
-        $width = $this->image->getWidth();
-        $height = $this->image->getHeight();
-
-        $source_ratio = $width / $height;
-
-        $target_ratio = explode(':', $target_ratio);
-        $target_ratio = $target_ratio[0] / $target_ratio[1];
-
-        if ($source_ratio == $target_ratio) {
-            return true;
-        }
-
-        if ($source_ratio > $target_ratio) {
-            $width = intval($height * $target_ratio);
-        } else {
-            $height = intval($width / $target_ratio);
-        }
-
-        $dim = $width . 'x' . $height;
-
-        $this->crop($dim, 'center,center');
     }
 
     private function roundCorners()
@@ -260,5 +227,33 @@ class ImageEditor
     private function grayscale()
     {
         $this->image = $this->image->asGrayscale();
+    }
+
+    public static function calcParamsForCropToRatio($source_width, $source_height, $target_ratio)
+    {
+        $width = $source_width;
+        $height = $source_height;
+
+        $x = 0;
+        $y = 0;
+
+        $source_ratio = $width / $height;
+
+        $target_ratio = explode(':', $target_ratio);
+        $target_ratio = $target_ratio[0] / $target_ratio[1];
+
+        if ($source_ratio == $target_ratio) {
+            return [$width . 'x' . $height, '0,0'];
+        }
+
+        if ($source_ratio > $target_ratio) {
+            $width = intval($height * $target_ratio);
+            $x = ($source_width - $width) / 2;
+        } else {
+            $height = intval($width / $target_ratio);
+            $y = ($source_height - $height) / 2;
+        }
+
+        return [$width . 'x' . $height, $x . ',' . $y];
     }
 }
