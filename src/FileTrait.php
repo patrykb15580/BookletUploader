@@ -112,7 +112,7 @@ trait FileTrait
 
         if ($this->isImage()) {
             $transformations = $this->transformations();
-            $transformations['preview'] = '120x120';
+            $transformations['preview'] = ['120x120'];
 
             return $this->transformUrl($transformations);
         }
