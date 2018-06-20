@@ -27,7 +27,7 @@ class Uploader
         $this->source_file_path = $this->file['tmp_name'] ?? $this->file;
 
         $this->file_directory = $this->directory();
-        $this->file_name = $this->safeFileName($this->file);
+        $this->file_name = $this->file_object->name;
         $this->file_path = $this->file_directory . '/' . $this->file_name;
 
         $this->transformations = $params['transformations'] ?? [];
@@ -85,10 +85,5 @@ class Uploader
     private function idPath()
     {
         return FilesUntils::objectIdToPath($this->file_object);
-    }
-
-    private function safeFileName($file)
-    {
-        return StringUntils::sanitizeFileName($file['name'] ?? basename($file));
     }
 }
