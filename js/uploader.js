@@ -815,6 +815,8 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
             modifiers.push(modifier_string);
         }
 
+        console.log(modifiers)
+
         var modifiers_string = (modifiers.length > 0) ? '-/' + modifiers.join('-/') : '';
 
         return modifiers_string;
@@ -824,7 +826,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         var applied_effects = $.extend(true, {}, effects.applied);
         applied_effects.resize = ['900x900'];
 
-        var url = file.original_url.replace('original', _modifiersStringBuilder(applied_effects));
+        var url = file.original_url + _modifiersStringBuilder(applied_effects);
 
         return url;
     }

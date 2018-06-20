@@ -17,6 +17,7 @@ class ImageEditor
     private $file;
     private $file_path;
     private $temp_file_path;
+    private $already_generated;
     private $image;
     private $modifiers;
 
@@ -29,15 +30,17 @@ class ImageEditor
         $extension = pathinfo($this->file->name, PATHINFO_EXTENSION);
 
         $this->temp_file_path = self::TEMP_FILES_DIR . $signature . '.' . $extension;
+        $this->already_generated = file_exists($this->temp_file_path);
 
-        $this->image = WideImage::load($this->file_path);
-
-        $this->modifiers = $this->listModifiers($modifiers);
+        if (!$this->already_generated) {
+            $this->image = WideImage::load($this->file_path);
+            $this->modifiers = $this->listModifiers($modifiers);
+        }
     }
 
     public function transform()
     {
-        if (file_exists($this->temp_file_path)) {
+        if ($this->already_generated) {
             return $this->temp_file_path;
         }
 
@@ -232,7 +235,7 @@ class ImageEditor
         $this->image = $this->image->asGrayscale();
     }
 
-    public static function calcParamsForCropToRatio($source_width, $source_height, $target_ratio)
+    public static function getParamsForCropToRatio($source_width, $source_height, $target_ratio)
     {
         $width = $source_width;
         $height = $source_height;
