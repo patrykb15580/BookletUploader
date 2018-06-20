@@ -595,9 +595,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
             _onEffectChange();
         },
         applyDefaultEffects: function() {
-            var aspect_ratio = (options.crop && options.crop == 'free') ? options.crop.replace(/[\\,:]/g, '/') : false;
-
-            aspect_ratio = '1/1';
+            var aspect_ratio = (options.crop && options.crop !== 'free') ? options.crop.replace(/[\\,:]/g, '/') : false;
 
             if (aspect_ratio) {
                 var source_width = file.image_info.width, width = source_width;
@@ -625,7 +623,7 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
         },
         operations: {
             crop: function() {
-                var aspect_ratio = String(options.crop).replace('/[\\,:]/g', '/');
+                var aspect_ratio = String(options.crop).replace(/[\\,:]/g, '/');
                 aspect_ratio = (aspect_ratio == 'free') ? null : eval(aspect_ratio);
 
                 var cropper = new _cropper(aspect_ratio);
@@ -742,8 +740,6 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
     var _refreshPreview = function() {
         var url = _generateModifiedUrl();
 
-        console.log(url);
-
         panel_elements.editor.preview.image.fadeOut(200, function() {
             panel_elements.editor.preview.loader.fadeIn(200);
 
@@ -814,8 +810,6 @@ var BookletUploaderFileEditor = function(panel, file_hash) {
 
             modifiers.push(modifier_string);
         }
-
-        console.log(modifiers)
 
         var modifiers_string = (modifiers.length > 0) ? '-/' + modifiers.join('-/') : '';
 
