@@ -180,6 +180,9 @@ class ImageEditor
     {
         list($width, $height) = explode('x', $size);
 
+        $width = (empty($width)) ? null : $width;
+        $height = (empty($height)) ? null : $height;
+
         $this->image = $this->image->resize($width, $height, $fit, $scale);
     }
 
