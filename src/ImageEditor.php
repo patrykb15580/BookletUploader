@@ -16,6 +16,7 @@ class ImageEditor
 
     private $file;
     private $file_path;
+    private $file_format;
     private $temp_file_path;
     private $already_generated;
     private $image;
@@ -25,11 +26,11 @@ class ImageEditor
     {
         $this->file = $file;
         $this->file_path = $file->path();
+        $this->file_format = MimeType::mimeToExtension($file->type);
 
-        $signature = md5($this->file->hash_id . '/' . $modifiers);
-        $extension = pathinfo($this->file->name, PATHINFO_EXTENSION);
+        $signature = $this->file->transformed($modifiers);
 
-        $this->temp_file_path = self::TEMP_FILES_DIR . $signature . '.' . $extension;
+        $this->temp_file_path = self::TEMP_FILES_DIR . $signature . '.' . $this->file_format;
         $this->already_generated = file_exists($this->temp_file_path);
 
         if (!$this->already_generated) {
@@ -48,7 +49,22 @@ class ImageEditor
             $this->applyTransformation($method, $params);
         }
 
-        return ($this->save()) ? $this->temp_file_path : false;
+        return $this->save();
+    }
+
+    public function path()
+    {
+        return file_exists($this->temp_file_path) ? $this->temp_file_path : false;
+    }
+
+    public function asString()
+    {
+        return $this->image->asString($this->file_format);
+    }
+
+    public function output()
+    {
+        $this->image->output($this->file_format);
     }
 
     private function save()
@@ -204,7 +220,12 @@ class ImageEditor
 
     private function circle()
     {
-        $this->cropToRatio('1:1');
+        $image_width = $this->image->getWidth();
+        $image_height = $this->image->getHeight();
+
+        list($dimensions, $point) = self::getParamsForCropToRatio($image_width, $image_height, '1:1');
+
+        $this->crop($dimensions, $point);
         $radius = $this->image->getWidth() / 2;
 
         $this->image = $this->image->roundCorners($radius, null, 4);

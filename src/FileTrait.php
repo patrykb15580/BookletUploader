@@ -78,6 +78,27 @@ trait FileTrait
         return ($this->deleted_at) ? true : false;
     }
 
+    public function transformedFileSignture($modifiers = '')
+    {
+        return md5($this->id . $modifiers);
+    }
+
+    public function transformedFilePath($modifiers = '')
+    {
+        $editor_temp_dir = ImageEditor::TEMP_FILES_DIR;
+        $signature = $this->transformedFileSignture($modifiers);
+        $extension = '.' . MimeType::mimeToExtension($this->type);
+
+        return $editor_temp_dir . $signature . $extension;
+    }
+
+    public function transformedFileExists($modifiers = '')
+    {
+        $file_path = $thid->transformedFilePath($modifiers);
+
+        return file_exists($file_path);
+    }
+
     public function preview()
     {
         // Define previews files paths

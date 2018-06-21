@@ -35,13 +35,25 @@ class Uploader
 
     public function upload()
     {
-        if ($this->createDirectory($this->file_directory) && $this->copyFile()) {
-            $this->updateFileModelData();
+        if (!file_exists($this->file_directory) && !mkdir($this->file_directory, 0755, true)) {
+            throw new \Exception('Can\'t create directory ' . $directory . '.');
 
-            return true;
+            return false;
         }
 
-        return false;
+        chmod($this->file_directory, 0777);
+
+        if (!rename($this->source_file_path, $this->file_path)) {
+            throw new \Exception('File copy failure.');
+
+            return false;
+        }
+
+        chmod($this->file_path, 0644);
+
+        $this->updateFileModelData();
+
+        return true;
     }
 
     private function updateFileModelData()
@@ -51,35 +63,9 @@ class Uploader
         ]);
     }
 
-    private function copyFile()
-    {
-        if (!rename($this->source_file_path, $this->file_path)) {
-            throw new \Exception('File copy failure.');
-        }
-
-        chmod($this->file_path, 0644);
-
-        return true;
-    }
-
     private function directory()
     {
         return Uploader::FILES_DIRECTORY . $this->idPath();
-    }
-
-    private function createDirectory($directory)
-    {
-        if (file_exists($directory)) {
-            return true;
-        }
-
-        if (!mkdir($directory, 0755, true)) {
-            throw new \Exception('Can\'t create directory ' . $directory . '.');
-        }
-
-        chmod($directory, 0777);
-
-        return true;
     }
 
     private function idPath()
