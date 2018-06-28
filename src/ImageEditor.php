@@ -28,7 +28,7 @@ class ImageEditor
         $this->file_path = $file->path();
         $this->file_format = MimeType::mimeToExtension($file->type);
 
-        $signature = $this->file->transformed($modifiers);
+        $signature = $this->file->transformedFileSignture($modifiers);
 
         $this->temp_file_path = self::TEMP_FILES_DIR . $signature . '.' . $this->file_format;
         $this->already_generated = file_exists($this->temp_file_path);
@@ -49,22 +49,7 @@ class ImageEditor
             $this->applyTransformation($method, $params);
         }
 
-        return $this->save();
-    }
-
-    public function path()
-    {
-        return file_exists($this->temp_file_path) ? $this->temp_file_path : false;
-    }
-
-    public function asString()
-    {
-        return $this->image->asString($this->file_format);
-    }
-
-    public function output()
-    {
-        $this->image->output($this->file_format);
+        return ($this->save()) ? $this->temp_file_path : false;
     }
 
     private function save()
@@ -138,10 +123,6 @@ class ImageEditor
 
         if ($method == 'rounded') {
             $this->roundCorners();
-        }
-
-        if ($method == 'circle') {
-            $this->circle();
         }
 
         if ($method == 'rotate') {

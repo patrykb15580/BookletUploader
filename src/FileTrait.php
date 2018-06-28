@@ -47,8 +47,14 @@ trait FileTrait
         }
 
         list($width, $height) = getimagesize($this->url());
+        list($original_width, $original_height) = getimagesize($this->path());
 
-        return ['width' => $width, 'height' => $height];
+        return [
+            'width' => $width,
+            'height' => $height,
+            'original_width' => $original_width,
+            'original_height' => $original_height
+        ];
     }
 
     public function info()

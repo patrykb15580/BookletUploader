@@ -1,58 +1,104 @@
-var BookletUploaderHelpers = (function() {
-    var generateHash = function() {
-
-        return Math.random().toString(36).substr(2, 9);
+var BookletUploaderTemplate = (function() {
+    var _html = {
+        panel: '<div id="bu--dialog">\
+            <div class="bu--panel">\
+                <div class="bu--panel-header">{{header}}</div>\
+                <div class="bu--panel-content"></div>\
+                <div class="bu--panel-footer">\
+                    <ul class="bu--footer-nav">\
+                        <li class="bu--footer-nav--left">\
+                            <button class="bu--button bu--panel-close">{{reject}}</button>\
+                        </li>\
+                        <li class="bu--footer-nav--right">\
+                            <button class="bu--button bu--button-primary bu--panel-done">{{done}}</button>\
+                        </li>\
+                    </ul>\
+                </div>\
+            </div>\
+        </div>',
+        uploader: '<div class="bu--choose-files-section">\
+            <input id="bu--files-picker" class="bu--files-picker" type="file" />\
+            <div class="bu--drop-area">\
+                <i class="upload-icon fas fa-cloud-upload-alt"></i>\
+                {{drop_area}}\
+            </div>\
+            <label class="bu--button bu--button-primary bu--select-files" for="bu--files-picker">\
+                {{files_picker}}\
+            </label>\
+            {{#max_size_info}}\
+                <div class="bu--max-file-size-info">\
+                    {{max_size_info}}\
+                </div>\
+            {{/max_size_info}}\
+        </div>\
+        <div class="bu--selected-files-section">\
+            <ul class="bu--files-list"></ul>\
+        </div>\
+        <div class="bu--files-counter">\
+            {{files_counter}}\
+        </div>',
+        file: '<li class="bu--file file-{{file_hash}}" data-hash="{{file_hash}}">\
+            <div class="bu--file-preview"></div>\
+            <div class="bu--file-details">\
+                <div class="bu--file-name">{{file_name}}</div>\
+                <div class="bu--file-size">{{file_size}}</div>\
+                <div class="bu--file-upload-progress">\
+                    <div class="bu--progressbar">\
+                        <div class="bu--progress"></div>\
+                    </div>\
+                </div>\
+            </div>\
+            <ul class="bu--file-actions">\
+                <li class="bu--file-action-button file-action-remove">\
+                    <i class="fa fa-trash"></i>\
+                </li>\
+            </ul>\
+        </li>',
+        editor: '<div class="bu--editor-sidebar">\
+            <ul class="bu--editor-menu"></ul>\
+        </div>\
+        <div class="bu--editor-content">\
+            <div class="bu--editor-preview">\
+                <img src="" alt="" />\
+            </div>\
+            <div class="bu--image-cropper">\
+                <div class="bu--cropper-preview">\
+                    <img src="" alt="" />\
+                </div>\
+            </div>\
+        </div>',
+        effect_button: '<li class="bu--editor-menu-item action-{{action}}" data-action="{{action}}">\
+            <i class="bu--icon icon-{{action}} sm"></i>\
+            {{label}}\
+        </li>'
     };
 
-    var sizeToSizeString = function(bytes) {
-        var units = ['B','kB','MB','GB','TB','PB','EB','ZB','YB'];
-        var size = bytes;
-        var unit_index = 0;
+    var getHTML = function(elem_name) {
+        return _html[elem_name];
+    }
 
-        while (Math.abs(size) >= 1024 && unit_index < units.length) {
-            size /= 1024;
-            ++unit_index;
-        }
+    var getElement = function(elem_name) {
+        return $(getHTML(elem_name));
+    }
 
-        return Math.round(size * 10) / 10 + ' ' + units[unit_index];
-    };
-
-    var isVarEmpty = function(variable) {
-        // Check if object/array is empty
-        if (typeof variable == 'object') {
-            for (var key in variable) {
-                if (variable.hasOwnProperty(key)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        var undef;
-        var empty_values = [null, false, 0, '0', '', undef];
-
-        for (var i = 0; i < empty_values.length; i++) {
-            if (variable === empty_values[i]) {
-                return true;
-            }
-        }
-
-        return false;
+    var render = function(html, data) {
+        return $(Mustache.render(html, data));
     }
 
     return {
-        sizeToSizeString: sizeToSizeString,
-        generateHash: generateHash,
-        isVarEmpty: isVarEmpty
-    }
+        getHTML: getHTML,
+        getElement: getElement,
+        render: render,
+    };
 })();
 
 var BookletUploader = (function() {
+    var plugin_directory_parts = document.currentScript.src.split('/');
+    plugin_directory_parts.splice(0, 3);
+    plugin_directory_parts.splice(-2, 2);
+    var plugin_directory = '/' + plugin_directory_parts.join('/') + '/';
+
     var defaults = {
-        endpoint: null,
-        template: 'default',
-        custom_template: null,
         locale: 'en',
         store_to: 'local',
         multiple: true,
@@ -65,80 +111,83 @@ var BookletUploader = (function() {
         crop: null,
     };
 
-    var plugin_directory_parts = document.currentScript.src.split('/');
-    plugin_directory_parts.splice(0, 3);
-    plugin_directory_parts.splice(-2, 2);
+    var _panel = null;
 
-    var plugin_directory = '/' + plugin_directory_parts.join('/') + '/';
+    var helpers = {
+        uid: function() {
+            var hex_chr = '0123456789abcdef';
+            var uid = '';
+            for (var i = 0; i < 32; i++) {
+                var a = Math.floor(Math.random() * (hex_chr.length - 1));
 
-    var _openPanel = function(options = {}) {
-        return new BookletUploaderPanel(options);
-    }
-
-    var openDialog = function(options = {}) {
-        var panel = _openPanel(options);
-
-        return panel.openUploader();
-    };
-
-    var openEditor = function(file_hash, options = {}) {
-        var panel = _openPanel(options);
-
-        return panel.openEditor(file_hash);
-    };
-
-    var getTemplate = function(template_name) {
-        var template_file = plugin_directory + 'templates/' + template_name + '/template.html';
-
-        var template = $.Deferred();
-        template.promise();
-
-        template = $.extend(template, {
-            path: template_file,
-            html: null,
-            getHTML: function() {
-                $.get(this.path, function(html) {
-                    template.html = html;
-                    template.resolve();
-                });
-            },
-            getSection: function(section) {
-                return $(this.html).filter(section).html();
-            },
-            render: function(html, data) {
-                return $(Mustache.render(html, data));
+                 uid += hex_chr.charAt(a);
             }
-        });
 
-        template.getHTML();
+            return uid;
+        },
+        sizeToSizeString: function(bytes) {
+            var units = ['B','kB','MB','GB','TB','PB','EB','ZB','YB'];
+            var size = bytes;
+            var unit_index = 0;
 
-        return template;
-    }
+            while (Math.abs(size) >= 1024 && unit_index < units.length) {
+                size /= 1024;
+                ++unit_index;
+            }
 
+            return Math.round(size * 10) / 10 + ' ' + units[unit_index];
+        },
+        isVarEmpty: function(variable) {
+            // Check if object/array is empty
+            if (typeof variable == 'object') {
+                for (var key in variable) {
+                    if (variable.hasOwnProperty(key)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            var undef;
+            var empty_values = [null, false, 0, '0', '', undef];
+
+            for (var i = 0; i < empty_values.length; i++) {
+                if (variable === empty_values[i]) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+        setTextVariables: function(text, params = {}) {
+            for (var param in params) {
+                text = text.replace('%' + param + '%', params[param]);
+            }
+
+            return text;
+        },
+    };
     var locale = function(locale = 'en') {
         var locales = {
             en: {
                 header: {
                     uploader: 'Select files to upload',
-                    editor: 'Add effects to your image'
+                    editor: 'Edit your image'
                 },
+                files_picker: 'Choose file',
                 done: 'Done',
                 upload: 'Upload',
                 save: 'Save',
-                files_picker: {
-                    single: 'Select file',
-                    multiple: 'Select files'
-                },
-                drop_area: {
-                    single: 'Drag and drop file here<br /> or',
-                    multiple: 'Drag and drop files here<br /> or'
-                },
-                info: {
-                    max_size: 'Max size of uploaded file is <b>%max_file_size%</b>'
-                },
-                files_counter: {
-                    default: 'Uploaded <b>%files_number%</b> files',
-                    limit: 'Uploaded <b>%files_number%</b> from <b>%files_number_limit%</b> files'
+                reject: 'Cancel',
+                drop_area: 'Drag and drop file here',
+                max_size_info: 'Max size of uploaded file is %max_size%',
+                files_counter: 'Uploaded %files_number% files',
+                from: 'of %number%',
+                from_files: 'of %files_number% files',
+                multiple: {
+                    drop_area: 'Drag and drop files here',
+                    files_picker: 'Choose files',
                 },
                 effects: {
                     crop: 'Crop',
@@ -151,9 +200,8 @@ var BookletUploader = (function() {
                 errors: {
                     file: {
                         invalid_type: 'Invalid file type',
-                        max_files_number_exceeded: 'Max files number limit exceeded',
-                        max_size_exceeded: 'Max file size limit exceeded',
-                        min_size_exceeded: 'Min file size limit exceeded'
+                        max_size: 'Max file size limit exceeded',
+                        min_size: 'Min file size limit exceeded'
                     },
                     upload: {
                         default: 'Something went wrong',
@@ -164,25 +212,21 @@ var BookletUploader = (function() {
             pl: {
                 header: {
                     uploader: 'Wybierz pliki do przesłania',
-                    editor: 'Dodaj efekty do swojego zdjęcia'
+                    editor: 'Edycja zdjęcia'
                 },
+                files_picker: 'Wybierz plik',
                 done: 'Zakończ',
                 upload: 'Wyślij',
                 save: 'Zapisz',
-                files_picker: {
-                    single: 'Kliknij aby wybrać plik',
-                    multiple: 'Kliknij aby wybrać pliki'
-                },
-                drop_area: {
-                    single: 'Przeciągnij i upuść tutaj plik<br /> lub',
-                    multiple: 'Przeciągnij i upuść tutaj pliki<br /> lub'
-                },
-                info: {
-                    max_size: 'Maksymalna waga przesyłanego pliku wynosi <b>%max_file_size%</b>'
-                },
-                files_counter: {
-                    default: 'Wybrano <b>%files_number%</b> plików',
-                    limit: 'Wybrano <b>%files_number%</b> z <b>%files_number_limit%</b> plików'
+                reject: 'Anuluj',
+                drop_area: 'Przeciągnij i upuść plik tutaj',
+                max_size_info: 'Maksymalny rozmiar pliku wynosi %max_size%',
+                files_counter: 'Przesłano %files_number% plików',
+                from: ' z %number%',
+                from_files: ' z %files_number% plików',
+                multiple: {
+                    drop_area: 'Przeciągnij i upuść pliki tutaj',
+                    files_picker: 'Wybierz pliki',
                 },
                 effects: {
                     crop: 'Kadrowanie',
@@ -195,13 +239,12 @@ var BookletUploader = (function() {
                 errors: {
                     file: {
                         invalid_type: 'Nieprawidłowy format pliku',
-                        max_files_number_exceeded: 'Wybrano maksymalną liczbę plików',
-                        max_size_exceeded: 'Zbyt duży rozmiar pliku',
-                        min_size_exceeded: 'Zbyt mały rozmiar pliku'
+                        max_size: 'Zbyt duży rozmiar pliku',
+                        min_size: 'Zbyt mały rozmiar pliku'
                     },
                     upload: {
                         default: 'Błąd podczas wysyłania',
-                        abort: 'Wysyłanie przerwane'
+                        abort: 'Wysyłanie przerwane',
                     }
                 }
             }
@@ -214,774 +257,778 @@ var BookletUploader = (function() {
         }
 
         return locale;
+    };
+    var openUploader = function(options = {}) {
+        return new _openPanel(options).openUploader();
+    }
+    var openEditor = function(file_hash, options = {}) {
+        return new _openPanel(options).openEditor(file_hash);
     }
 
-    return {
-        defaults: defaults,
-        getTemplate: getTemplate,
-        openDialog: openDialog,
-        openEditor: openEditor,
-        locale: locale,
-        directory: plugin_directory,
-    }
-})();
-
-var BookletUploaderPanel = function(options) {
-    var options = $.extend(BookletUploader.defaults, options);
-    var locale = BookletUploader.locale(options.locale);
-
-    var _renderPanel = function() {
-        panel.html = panel.template.getSection('#booklet-uploader-panel');
-        panel.element = $(panel.html);
-    };
-
-    var _bindEvents = function() {
-        panel.element.on('click', '.booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--dialog-done', function() {
-            panel.resolve();
-
-            _close();
-        });
-
-        panel.element.on('click', '.booklet-uploader--panel .booklet-uploader--panel-header .booklet-uploader--dialog-close', function() {
-            panel.reject();
-
-            _close();
-        });
-    };
-
-    var _close = function() {
-        panel.element.fadeOut(300, function() { $(this).remove(); });
-    };
-
-    var panel = $.Deferred();
-    panel.promise();
-
-    panel = $.extend(panel, {
-        element: null,
-        html: null,
-        template: BookletUploader.getTemplate(options.template),
-        options: options,
-        locale: locale,
-        setLocaleTextVariables: function(text, params = {}) {
-            for (var param in params) {
-                text = text.replace('%' + param + '%', params[param]);
-            }
-
-            return text;
-        },
-        render: function(template_data, callback = null) {
-            this.html = this.template.render(this.html, template_data);
-            this.element = $(this.html);
-
-            _bindEvents();
-
-            this.element.hide().appendTo('body').fadeIn(300);
-
-            if (typeof callback == 'function') {
-                callback.call();
-            }
-        },
-        openUploader: function() {
-            return new BookletUploaderDialog(this);
-        },
-        openEditor: function(file_hash) {
-            return new BookletUploaderFileEditor(this, file_hash);
-        }
-    });
-
-    panel.template.done(function(template) {
-        _renderPanel();
-    });
-
-    return panel;
-}
-
-var BookletUploaderDialog = function(panel) {
-    if (!panel.options.endpoint) {
-        throw 'endpoint in not defined';
-    }
-
-    var options = panel.options;
-    var locale = panel.locale;
-
-    var uploader = $.Deferred();
-
-    var uploaded_or_queued = {};
-    var result = {};
-    var element = null;
-
-    var validators = {
-        type: function(file) {
-            if (options.validations.type == '' || options.validations.type == null) { return true; }
-
-            var allowed_types = options.validations.type.replace(' ', '').split(',');
-
-            for (var i = 0; i < allowed_types.length; i++) {
-                var type_parts = allowed_types[i].split('/');
-
-                if (file.type == allowed_types[i]) {
-
-                    return true;
-                }
-
-                if (file.type.split('/')[0] == type_parts[0] && type_parts[1] == '*') {
-
-                    return true;
-                }
-            }
-
-            file.error.call(file, locale.errors.file.invalid_type);
-
-            return false;
-        },
-        maxSize: function(file) {
-            if (options.validations.max_size !== null && file.size > options.validations.max_size) {
-                file.error.call(file, locale.errors.file.max_size_exceeded);
-
-                return false;
-            }
-
-            return true;
-        },
-        minSize: function(file) {
-            if (options.validations.min_size !== null && file.size < options.validations.min_size) {
-                file.error.call(file, locale.errors.file.min_size_exceeded);
-
-                return false;
-            }
-
-            return true;
-        }
-    };
-
-    var _numberOfUploadedOrQueued = function() {
-        return Object.keys(uploaded_or_queued).length;
-    };
-
-    var _templateData = function() {
-        var data = {
-            panel_title: locale.header.uploader,
-            drop_area_text: locale.drop_area.single,
-            files_picker: locale.files_picker.single,
-            file_size_limit_info: null,
-            files_counter: panel.setLocaleTextVariables(locale.files_counter.default, { files_number: _numberOfUploadedOrQueued() }),
-            done: locale.upload,
+    var _openPanel = function(options = {}) {
+        if (_panel) {
+            _panel.close();
         }
 
-        if (options.multiple) {
-            data.drop_area = locale.drop_area.multiple;
-            data.files_picker = locale.files_picker.multiple;
-        }
+        var options = $.extend(defaults, options);
 
-        if (options.validations.max_size) {
-            data.file_size_limit_info = panel.setLocaleTextVariables(locale.info.max_size, {
-                max_file_size: options.validations.max_size
-            });
-        }
+        var panel = $.extend($.Deferred(), {
+            element: BookletUploaderTemplate.getElement('panel'),
+            options: options,
+            locale: locale(options.locale),
+            render: function() {
+                this.element.hide().appendTo('body').fadeIn(300);
+            },
+            close: function() {
+                _panel = null;
 
-        if (options.max_files) {
-            data.files_counter = panel.setLocaleTextVariables(locale.files_counter.limit, {
-                files_number: _numberOfUploadedOrQueued(),
-                files_number_limit: options.max_files,
-            });
-        }
+                this.element.fadeOut(300, function() { $(this).remove(); });
+            },
+            openUploader: function() {
+                var uploader = panel;
 
-        return data;
-    };
+                var result = {};
 
-    var _renderUploader = function() {
-        var panel_content = panel.template.getSection('#booklet-uploader-panel-uploader');
-        panel.element.find('.booklet-uploader--panel-content').append(panel_content);
-        panel.element.find('#booklet-uploader--files-picker').attr({
-            multiple: options.multiple,
-            accept: options.validations.type
-        }).hide();
+                var _numberOfUploadedOrQueued = function() {
+                    return Object.keys(result).length;
+                };
 
-        var template_data = _templateData();
+                var _isMaxFilesNumberLimitExceeded = function() {
+                    return (uploader.options.max_files == null || _numberOfUploadedOrQueued() < uploader.options.max_files) ? false : true;
+                };
 
-        panel.html = panel.element[0].outerHTML;
-        panel.render(template_data, function() {
-            _bindEvents();
-        });
-    };
+                var _templateData = function() {
+                    var data = {
+                        header: uploader.locale.header.uploader,
+                        reject: uploader.locale.reject,
+                        done: uploader.locale.upload,
+                        drop_area: uploader.locale.drop_area,
+                        files_picker: uploader.locale.files_picker,
+                        max_size_info: null,
+                        files_counter: helpers.setTextVariables(uploader.locale.files_counter, { files_number: _numberOfUploadedOrQueued() })
+                    }
 
-    var _bindEvents = function() {
-        panel.element.on('click', '#booklet-uploader--files-picker', function(e) {
-            if (_isMaxFilesNumberLimitExceeded()) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
+                    if (uploader.options.multiple) {
+                        data.drop_area = uploader.locale.multiple.drop_area,
+                        data.files_picker = uploader.locale.multiple.files_picker;
+                    }
 
-        panel.element.on('change', '#booklet-uploader--files-picker', function() {
-            _onFilesSelect(this.files);
-        });
-
-        panel.done(function() {
-            var results = [];
-
-            uploader.resolve(Object.values(result));
-        });
-
-        panel.fail(function() {
-            for (var i = 0; i < result.length; i++) {
-                result.abort();
-            }
-
-            uploader.reject();
-        });
-
-        panel.element.on('dragover', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (!_isMaxFilesNumberLimitExceeded()) {
-                $(this).addClass('drag-in');
-            }
-        });
-
-        panel.element.on('dragleave', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            $(this).removeClass('drag-in');
-        });
-
-        panel.element.on('drop', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--drop-area', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            $(this).removeClass('drag-in');
-
-            if (!_isMaxFilesNumberLimitExceeded()) {
-                _onFilesSelect(e.originalEvent.dataTransfer.files);
-            }
-        });
-
-        panel.element.on('click', '.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-actions .booklet-uploader--file-action-button.file-remove', function() {
-            var file_elem = $(this).closest('.booklet-uploader--file');
-            var hash = file_elem.data('hash');
-
-            if (hash in result) {
-                result[hash].delete.call(result);
-            }
-
-            if (hash in uploaded_or_queued) {
-                delete uploaded_or_queued[hash];
-                _updateFilesCounter();
-            }
-        });
-    };
-
-    var _isFileValid = function(file) {
-        if ('type' in options.validations && !validators.type(file)) {
-            return false;
-        }
-
-        if ('max_size' in options.validations && !validators.maxSize(file)) {
-            return false;
-        }
-
-        if ('min_size' in options.validations && !validators.minSize(file)) {
-            return false;
-        }
-
-        return true;
-    };
-
-    var _onFilesSelect = function(files) {
-        $.each(files, function(i, file_data) {
-            if (_isMaxFilesNumberLimitExceeded()) {
-                file.error(locale.errors.file.max_files_number_exceeded);
-
-                return false;
-            }
-
-            var file = new BookletUploaderFile(file_data, panel.template);
-
-            result[file.hash] = file;
-            panel.element.find('.booklet-uploader--panel .booklet-uploader--panel-content .booklet-uploader--files-list').prepend(file.element);
-
-            if (_isFileValid(file)) {
-                uploaded_or_queued[file.hash] = file;
-                _updateFilesCounter();
-
-                var transformations = {
-                    crop: options.crop
-                }
-
-                file.upload.call(file, options.endpoint, options.store_to, transformations);
-                file.done(function(file_info) {
-                    file.file_info = file_info;
-                    file.is_stored = true;
-
-                    if (file_info.preview !== 'undefined' && file_info.preview !== null) {
-                        $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').on('load', function() {
-                            file.element.find('.booklet-uploader--file-preview').append($(this));
+                    if (uploader.options.validations.max_size) {
+                        data.max_size_info = helpers.setTextVariables(uploader.locale.max_size_info, {
+                            max_size: helpers.sizeToSizeString(uploader.options.validations.max_size)
                         });
                     }
-                }).fail(function(jqXHR, textStatus, errorThrown) {
-                    delete uploaded_or_queued[file.hash];
 
-                    file.error(locale.errors.upload.default);
-
-                    _updateFilesCounter();
-                }).always(function() {
-                    file.element.find('.booklet-uploader--upload-progress').hide();
-                });
-            }
-        });
-    };
-
-    var _isMaxFilesNumberLimitExceeded = function() {
-        return (options.max_files == null || _numberOfUploadedOrQueued() < options.max_files) ? false : true;
-    };
-
-    var _updateFilesCounter = function() {
-        var text = (options.max_files) ? locale.files_counter.limit : locale.files_counter.default;
-
-        text = text.replace('%files_number%', _numberOfUploadedOrQueued())
-            .replace('%files_number_limit%', options.max_files);
-
-        if (_isMaxFilesNumberLimitExceeded()) {
-            panel.element.find('.booklet-uploader--files-counter').html(text).css({ color: '#d80e24' });
-        } else {
-            panel.element.find('.booklet-uploader--files-counter').html(text).removeAttr('style');
-        }
-    };
-
-    panel.template.done(function() {
-        _renderUploader();
-    });
-
-    return uploader;
-};
-
-var BookletUploaderFileEditor = function(panel, file_hash) {
-    if (!file_hash) {
-        throw 'file_hash in not defined';
-    }
-
-    var file = null;
-    var effects = ['crop', 'rotate', 'mirror', 'flip', 'grayscale', 'negative'];
-
-    var options = $.extend({ effects: effects }, panel.options);
-    var locale = panel.locale;
-
-    var panel_elements = {};
-
-    var editor = $.Deferred();
-    editor.promise();
-    editor = $.extend(editor, {});
-
-    var effects = {
-        applied: {},
-        isEffectActive: function(effect) {
-            return !BookletUploaderHelpers.isVarEmpty(effects.applied[effect]);
-        },
-        applyEffect: function(effect, params = true) {
-            this.applied[effect] = params;
-
-            _onEffectChange();
-        },
-        removeEffect: function(effect) {
-            delete this.applied[effect]
-
-            _onEffectChange();
-        },
-        disableEffect: function(effect) {
-            effects.applied[effect] = false;
-
-            _onEffectChange();
-        },
-        applyDefaultEffects: function() {
-            var aspect_ratio = (options.crop && options.crop !== 'free') ? options.crop.replace(/[\\,:]/g, '/') : false;
-
-            if (aspect_ratio) {
-                var source_width = file.image_info.width, width = source_width;
-                var source_height = file.image_info.height, height = source_height;
-
-                var x = 0;
-                var y = 0;
-
-                var source_ratio = width / height;
-
-                var target_ratio = eval(aspect_ratio);
-
-                if (source_ratio == target_ratio) {
-                    if (source_ratio > target_ratio) {
-                        width = height * target_ratio;
-                        x = (source_width - width) / 2;
-                    } else {
-                        image_height = width / target_ratio;
-                        y = (source_height - height) / 2;
+                    if (uploader.options.max_files) {
+                        data.files_counter += helpers.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
                     }
 
-                    effects.applyEffect('crop', [width + 'x' + height, x + ',' + y]);
-                }
-            }
-        },
-        operations: {
-            crop: function() {
-                var aspect_ratio = String(options.crop).replace(/[\\,:]/g, '/');
-                aspect_ratio = (aspect_ratio == 'free') ? null : eval(aspect_ratio);
+                    return data;
+                };
 
-                var cropper = new _cropper(aspect_ratio);
-                cropper.done(function(data) {
-                    var dim = data.width + 'x' + data.height;
-                    var pos = data.x + ',' + data.y;
+                var _updateFilesCounter = function() {
+                    var text = helpers.setTextVariables(uploader.locale.files_counter, { files_number: _numberOfUploadedOrQueued() });
 
-                    effects.applyEffect('crop', [dim, pos]);
-                }).always(function() {
-                    cropper = null;
-                });
-            },
-            rotate: function() {
-                var current_angle = 0;
-                if (effects.isEffectActive('rotate')) {
-                    current_angle = effects.applied.rotate[0];
-                }
+                    if (uploader.options.max_files) {
+                        text += helpers.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
+                    }
 
-                var new_angle = current_angle + 90;
-                if (new_angle >= 360) {
-                    new_angle = new_angle - (new_angle * (new_angle / 360));
-                }
+                    uploader.elements.files_counter.html(text);
 
-                if (new_angle == 0) {
-                    effects.disableEffect('rotate');
-                } else {
-                    effects.applyEffect('rotate', [new_angle]);
-                }
-            },
-            flip: function() {
-                var is_active = effects.isEffectActive('flip');
-                var new_state = !is_active;
+                    if (_isMaxFilesNumberLimitExceeded()) {
+                        uploader.elements.files_counter.css({ color: '#d80e24' });
+                    } else {
+                        uploader.elements.files_counter.removeAttr('style');
+                    }
+                };
 
-                effects.applyEffect('flip', new_state);
-            },
-            mirror: function() {
-                var is_active = effects.isEffectActive('mirror');
-                var new_state = !is_active;
+                var _onFilesSelect = function(files) {
+                    $.each(files, function(i, file_data) {
+                        if (_isMaxFilesNumberLimitExceeded()) {
+                            return false;
+                        }
 
-                effects.applyEffect('mirror', new_state);
-            },
-            grayscale: function() {
-                var is_active = effects.isEffectActive('grayscale');
-                var new_state = !is_active;
+                        var file = new File({
+                            name: file_data.name,
+                            hash: helpers.uid(),
+                            size: file_data.size,
+                            type: file_data.type
+                        });
 
-                effects.applyEffect('grayscale', new_state);
-            },
-            negative: function() {
-                var is_active = effects.isEffectActive('negative');
-                var new_state = !is_active;
+                        uploader.elements.files_list.prepend(file.element);
 
-                effects.applyEffect('negative', new_state);
-            },
-        }
-    }
+                        if (!_isFileValid(file)) {
+                            return false;
+                        }
 
-    var _templateData = function() {
-        var data = {
-            panel_title: locale.header.editor,
-            done: locale.save,
-        }
+                        result[file.hash] = file;
+                        _updateFilesCounter();
 
-        return data;
-    };
+                        file.element.find('.bu--progressbar').show();
 
-    var _renderEditor = function() {
-        var panel_content = panel.template.getSection('#booklet-uploader-panel-editor');
-        panel.element.find('.booklet-uploader--panel-content').append(panel_content);
+                        file.upload = new Upload(file, file_data, { crop: uploader.options.crop }).done(function(file_info) {
+                            file.is_stored = true;
+                            file.element.addClass('uploaded');
 
-        for (var i = 0; i < options.effects.length; i++) {
-            panel.element.find('.booklet-uploader--file-editor .view-editor .editor-menu').append(_renderEffectButton(options.effects[i]));
-        }
+                            file.file_info().done(function(response) {
+                                var file_info = response.data;
 
-        panel.html = panel.element[0].outerHTML;
-        panel.render({
-            panel_title: locale.header.editor,
-            done: locale.save,
-        }, function() {
-            panel_elements = {
-                container: panel.element,
-                editor: {
-                    container: panel.element.find('.booklet-uploader--file-editor .view-editor'),
-                    preview: {
-                        container: panel.element.find('.booklet-uploader--file-editor .view-editor .editor-preview'),
-                        image: panel.element.find('.booklet-uploader--file-editor .view-editor .editor-preview img').hide(),
-                        loader: panel.element.find('.booklet-uploader--file-editor .view-editor .booklet-uploader--loader').hide(),
+                                $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').on('load', function() {
+                                    file.element.find('.bu--file-preview').append(this);
+                                });
+
+                                file.resolve(file_info);
+                            }).fail(function(xhr) {
+                                file.reject();
+                            });
+                        }).fail(function() {
+                            delete result[file.hash];
+
+                            file.reject().error(panel.locale.errors.upload.default);
+
+                            _updateFilesCounter();
+                        }).always(function() {
+                            delete file.upload;
+
+                            file.element.find('.bu--progressbar').hide();
+                        }).progress(function(progress) {
+                            file.element.find('.bu--progress').css({ 'width': progress + '%' });
+                        });
+
+                        file.upload.start();
+                    });
+                };
+
+                var _renderUploader = function() {
+                    uploader.element.addClass('bu--uploader').css({ height: window.innerHeight });
+
+                    var uploader_content = BookletUploaderTemplate.getHTML('uploader');
+                    uploader.element.find('.bu--panel-content').append(uploader_content);
+                    uploader.element.find('#bu--files-picker').attr({
+                        multiple: uploader.options.multiple,
+                        accept: uploader.options.validations.type
+                    }).hide();
+
+                    var html = uploader.element[0].outerHTML;
+                    uploader.element = BookletUploaderTemplate.render(html, _templateData());
+
+                    uploader.render();
+
+                    uploader.elements = {
+                        files_list: uploader.element.find('.bu--files-list'),
+                        files_picker: uploader.element.find('#bu--files-picker'),
+                        files_counter: uploader.element.find('.bu--files-counter'),
+                        drop_area: uploader.element.find('.bu--drop-area'),
+                        done: uploader.element.find('.bu--panel-done'),
+                        cancel: uploader.element.find('.bu--panel-close'),
+                    }
+                };
+
+                var _bindEvents = function() {
+                    $(window).resize(function() {
+                        uploader.element.css({ height: window.innerHeight });
+                    });
+
+                    uploader.elements.files_picker.on({
+                        click: function() {
+                            if (_isMaxFilesNumberLimitExceeded()) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }
+                        },
+                        change: function() {
+                            _onFilesSelect(this.files);
+                        }
+                    });
+
+                    uploader.elements.drop_area.on({
+                        dragover: function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (!_isMaxFilesNumberLimitExceeded()) {
+                                $(this).addClass('active');
+                            }
+                        },
+                        dragleave: function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            $(this).removeClass('active');
+                        },
+                        drop: function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            $(this).removeClass('active');
+
+                            if (!_isMaxFilesNumberLimitExceeded()) {
+                                _onFilesSelect(e.originalEvent.dataTransfer.files);
+                            }
+                        }
+                    });
+
+                    uploader.elements.files_list.on('click', '.bu--file .bu--file-action-button.file-action-remove', function() {
+                        var file_elem = $(this).closest('.bu--file');
+                        var hash = file_elem.data('hash');
+
+                        if (hash in result) {
+                            result[hash].delete();
+
+                            delete result[hash];
+                            _updateFilesCounter();
+                        }
+                    });
+
+                    uploader.element.on('click', '.bu--panel-done', function() {
+                        panel.resolve(Object.values(result));
+                    });
+
+                    uploader.element.on('click', '.bu--panel-close', function() {
+                        panel.reject();
+                    });
+
+                    uploader.always(function() {
+                        panel.close();
+                    });
+
+                    uploader.fail(function() {
+                        $.each(result, function(i, file) { file.abort(); });
+                    });
+                };
+
+                var _validators = {
+                    type: function(file) {
+                        if (uploader.options.validations.type == '' || uploader.options.validations.type == null) { return true; }
+
+                        var allowed_types = uploader.options.validations.type.replace(' ', '').split(',');
+
+                        for (var i = 0; i < allowed_types.length; i++) {
+                            var type_parts = allowed_types[i].split('/');
+
+                            if (file.type == allowed_types[i]) {
+                                return true;
+                            }
+
+                            if (file.type.split('/')[0] == type_parts[0] && type_parts[1] == '*') {
+                                return true;
+                            }
+                        }
+
+                        file.error.call(file, locale.errors.file.invalid_type);
+
+                        return false;
                     },
-                    menu: panel.element.find('.booklet-uploader--file-editor .view-editor .editor-menu'),
-                },
-                cropper: {
-                    container: panel.element.find('.booklet-uploader--file-editor .view-cropper').hide(),
-                    wrapper: panel.element.find('.booklet-uploader--file-editor .view-cropper .cropper-wrapper'),
-                    menu: panel.element.find('.booklet-uploader--file-editor .view-cropper .cropper-menu'),
+                    maxSize: function(file) {
+                        if (uploader.options.validations.max_size !== null && file.size > uploader.options.validations.max_size) {
+                            file.error.call(file, uploader.locale.errors.file.max_size);
+
+                            return false;
+                        }
+
+                        return true;
+                    },
+                    minSize: function(file) {
+                        if (uploader.options.validations.min_size !== null && file.size < uploader.options.validations.min_size) {
+                            file.error.call(file, uploader.locale.errors.file.min_size);
+
+                            return false;
+                        }
+
+                        return true;
+                    }
+                };
+                var _isFileValid = function(file) {
+                    if ('type' in uploader.options.validations && !_validators.type(file)) {
+                        return false;
+                    }
+
+                    if ('max_size' in uploader.options.validations && !_validators.maxSize(file)) {
+                        return false;
+                    }
+
+                    if ('min_size' in uploader.options.validations && !_validators.minSize(file)) {
+                        return false;
+                    }
+
+                    return true;
+                };
+
+                _renderUploader();
+                _bindEvents();
+
+                var options = uploader.options;
+                var locale = uploader.locale;
+                var element = uploader.element;
+                var elements = uploader.elements;
+                var render = uploader.render;
+                var close = uploader.close;
+
+                uploader = uploader.promise();
+                uploader.options = options;
+                uploader.locale = locale;
+                uploader.element = element;
+                uploader.elements = elements;
+                uploader.render = render;
+                uploader.close = close;
+
+                return uploader;
+            },
+            openEditor: function(file_hash) {
+                var editor = panel;
+                editor.options = $.extend({ effects: ['crop', 'rotate', 'mirror', 'flip', 'grayscale', 'negative'] }, editor.options);
+
+                var editor_elements = {};
+
+                _cropper = null;
+                var modifiers = {
+                    modifiers_order: ['crop', 'resize', 'rotate', 'flip', 'mirror', 'grayscale', 'negative'],
+                    applied: {},
+                    apply: function(effect, params = []) {
+                        this.applied[effect] = params;
+
+                        _onEffectChange();
+                    },
+                    isApplied: function(modifier) {
+                        return this.applied.hasOwnProperty(modifier);
+                    },
+                    remove: function(modifier) {
+                        delete this.applied[modifier];
+
+                        _onEffectChange();
+                    },
+                    defaultModifiers: function() {
+                        console.log(editor.file.file_info);
+
+                        var aspect_ratio = false;
+                        if (editor.options.crop && editor.options.crop !== 'free') {
+                            aspect_ratio = editor.options.crop.replace(/[\\,:]/g, '/');
+                        }
+
+                        if (aspect_ratio) {
+                            var source_width = editor.file.file_info.image_info.original_width, width = source_width;
+                            var source_height = editor.file.file_info.image_info.original_height, height = source_height;
+
+                            var x = 0;
+                            var y = 0;
+
+                            var source_ratio = width / height;
+                            var target_ratio = eval(aspect_ratio);
+
+                            if (source_ratio !== target_ratio) {
+                                if (source_ratio > target_ratio) {
+                                    width = height * target_ratio;
+                                    x = (source_width - width) / 2;
+                                } else {
+                                    image_height = width / target_ratio;
+                                    y = (source_height - height) / 2;
+                                }
+
+                                this.apply('crop', [ width + 'x' + height, x + ',' + y ]);
+                            }
+                        }
+                    },
+                    toString: function() {
+                        var m = [];
+
+                        for (var i = 0; i < this.modifiers_order.length; i++) {
+                            var effect = this.modifiers_order[i];
+
+                            if (!this.applied.hasOwnProperty(effect) || !this.applied[effect]) {
+                                continue;
+                            }
+
+                            var params = this.applied[effect];
+                            var modifier = effect + '/';
+
+                            if (Array.isArray(params) && params.length > 0) {
+                                modifier += params.join('/') + '/';
+                            }
+
+                            m.push(modifier);
+                        }
+
+                        var string = m.join('-/');
+
+                        if (string !== '') {
+                            string = '-/' + string;
+                        }
+
+                        return string;
+                    },
+                    toUrl: function() {
+                        return editor.file.file_info.original_url + this.toString();
+                    },
+                    methods: {
+                        crop: function() {
+                            _cropper = new CropTool().open();
+                            _cropper.done(function(data) {
+                                var dimensions = data.width + 'x' + data.height;
+                                var position = data.x + ',' + data.y;
+
+                                modifiers.apply('crop', [ dimensions, position ]);
+                            }).always(function() {
+                                _cropper = null;
+                            });
+                        },
+                        rotate: function() {
+                            var current_angle = (modifiers.isApplied('rotate')) ? modifiers.applied.rotate[0] : 0;
+                            var new_angle = current_angle + 90;
+                            if (new_angle >= 360) {
+                                new_angle = new_angle - (new_angle * (new_angle / 360));
+                            }
+
+                            if (new_angle == 0) {
+                                modifiers.remove('rotate');
+                            } else {
+                                modifiers.apply('rotate', [new_angle]);
+                            }
+                        },
+                        flip: function() {
+                            if (modifiers.isApplied('flip')) {
+                                modifiers.remove('flip');
+                            } else {
+                                modifiers.apply('flip', []);
+                            }
+                        },
+                        mirror: function() {
+                            if (modifiers.isApplied('mirror')) {
+                                modifiers.remove('mirror');
+                            } else {
+                                modifiers.apply('mirror', []);
+                            }
+                        },
+                        grayscale: function() {
+                            if (modifiers.isApplied('grayscale')) {
+                                modifiers.remove('grayscale');
+                            } else {
+                                modifiers.apply('grayscale', []);
+                            }
+                        },
+                        negative: function() {
+                            if (modifiers.isApplied('negative')) {
+                                modifiers.remove('negative');
+                            } else {
+                                modifiers.apply('negative', []);
+                            }
+                        },
+                    }
                 }
-            }
 
-            _refreshPreview();
-            _bindEvents();
-        });
-    };
+                var _templateData = function() {
+                    return {
+                        header: editor.locale.header.editor,
+                        done: editor.locale.save,
+                        reject: editor.locale.reject,
+                    };
+                };
 
-    var _renderEffectButton = function(effect_name) {
-        var effect_label = locale.effects[effect_name];
+                var _refreshPreview = function() {
+                    var img = editor.elements.preview.find('img');
+                    img.fadeOut(200, function() {
+                        $(this).attr({ src: modifiers.toUrl() }).load(function() {
+                            $(this).fadeIn(200);
+                        });
+                    });
+                }
 
-        var button_html = panel.template.getSection('#booklet-uploader-file-editor-menu-item');
-        var button = panel.template.render(button_html, {
-            effect_name: effect_name,
-            effect_label: effect_label
-        });
+                var _onEffectChange = function() {
+                    _refreshPreview();
+                };
 
-        return button;
-    }
+                var CropTool = function() {
+                    var aspect_ratio = String(editor.options.crop).replace(/[\\,:]/g, '/');
+                    aspect_ratio = (aspect_ratio == 'free') ? null : eval(aspect_ratio);
 
-    var _refreshPreview = function() {
-        var url = _generateModifiedUrl();
+                    var cropper = $.Deferred();
+                    cropper.element = editor.elements.cropper.find('.bu--cropper-preview img');
+                    cropper.cropper = new Cropper(cropper.element[0], {
+                        aspectRatio: aspect_ratio,
+                        autoCropArea: 1,
+                        dragMode: 'move',
+                        restore: false,
+                        viewMode: 1,
+                        movable: false,
+                        rotatable: false,
+                        scalable: false,
+                        zoomable: false,
+                        zoomOnTouch: false,
+                        zoomOnWheel: false,
+                        toggleDragModeOnDblclick: false,
+                        responsive: true,
+                    });
+                    cropper.getData = function() {
+                        return cropper.cropper.getData(true);
+                    };
+                    cropper.open = function() {
+                        editor.element.find('.bu--editor-menu-item.action-crop').addClass('active');
+                        editor.element.find('.bu--panel-done').removeClass('bu--panel-done').addClass('bu--cropper-done');
+                        editor.element.find('.bu--panel-close').removeClass('bu--panel-close').addClass('bu--cropper-cancel');
 
-        panel_elements.editor.preview.image.fadeOut(200, function() {
-            panel_elements.editor.preview.loader.fadeIn(200);
+                        editor.elements.preview.hide();
+                        editor.elements.cropper.show();
 
-            $(this).attr({ src: url }).on('load', function() {
-                panel_elements.editor.preview.loader.fadeOut(200, function() {
-                    panel_elements.editor.preview.image.fadeIn(200);
+                        return cropper;
+                    };
+                    cropper.close = function() {
+                        cropper.cropper.destroy();
+
+                        editor.element.find('.bu--editor-menu-item.action-crop').removeClass('active');
+                        editor.element.find('.bu--cropper-done').removeClass('bu--cropper-done').addClass('bu--panel-done');
+                        editor.element.find('.bu--cropper-cancel').removeClass('bu--cropper-cancel').addClass('bu--panel-close');
+
+                        editor.elements.preview.show();
+                        editor.elements.cropper.hide();
+                    };
+                    cropper.always(function() {
+                        cropper.close();
+                    });
+
+                    editor.element.on('click', '.bu--cropper-done', function() {
+                        cropper.resolve(cropper.getData());
+                    });
+
+                    editor.element.on('click', '.bu--cropper-cancel', function() {
+                        cropper.reject();
+                    });
+
+                    return cropper;
+                }
+
+                var _renderEditor = function() {
+                    editor.element.addClass('bu--editor').css({ height: window.innerHeight });
+
+                    var editor_content = BookletUploaderTemplate.getHTML('editor');
+                    editor.element.find('.bu--panel-content').append(editor_content);
+                    editor.element.find('.bu--image-cropper').hide();
+
+                    var html = editor.element[0].outerHTML;
+                    editor.element = BookletUploaderTemplate.render(html, _templateData());
+
+                    editor.render();
+
+                    editor.elements = {
+                        menu: editor.element.find('.bu--editor-menu'),
+                        preview: editor.element.find('.bu--editor-preview'),
+                        cropper: editor.element.find('.bu--image-cropper'),
+                        done: editor.element.find('.bu--panel-done'),
+                        cancel: editor.element.find('.bu--panel-close'),
+                    }
+
+                    for (var i = 0; i < editor.options.effects.length; i++) {
+                        var effect = editor.options.effects[i];
+
+                        var button_html = BookletUploaderTemplate.getHTML('effect_button');
+                        var data = {
+                            action: effect,
+                            label: editor.locale.effects[effect]
+                        };
+                        var button = BookletUploaderTemplate.render(button_html, data);
+
+                        editor.elements.menu.append(button);
+                    }
+                }
+
+                var _bindEvents = function() {
+                    $(window).resize(function() {
+                        editor.element.css({ height: window.innerHeight });
+                    });
+
+                    editor.elements.menu.on('click', '.bu--editor-menu-item', function() {
+                        if (!_cropper) {
+                            var action = $(this).data('action');
+                            var operation = modifiers.methods[action];
+
+                            operation.call();
+                        }
+                    });
+
+                    editor.element.on('click', '.bu--panel-done', function() {
+                        var result = $.Deferred();
+                        var data = { file: { modifiers: modifiers.toString() } };
+
+                        $.post('/file/' + editor.file.hash, data, function(response) {
+                            result.resolve(response.data);
+                        }, 'json').fail(function() {
+                            result.reject();
+                        });
+
+                        panel.resolve(result.promise());
+                    });
+
+                    editor.element.on('click', '.bu--panel-close', function() {
+                        panel.reject();
+                    });
+
+                    editor.always(function() {
+                        panel.close();
+                    });
+                }
+
+
+                _renderEditor();
+                _bindEvents();
+
+                var options = editor.options;
+                var locale = editor.locale;
+                var element = editor.element;
+                var elements = editor.elements;
+                var render = editor.render;
+                var close = editor.close;
+
+                editor = editor.promise();
+                editor.options = options;
+                editor.locale = locale;
+                editor.element = element;
+                editor.elements = elements;
+                editor.render = render;
+                editor.close = close;
+                editor.file = new File({ hash: file_hash }).file_info();
+
+                editor.file.done(function(response) {
+                    var file_info = response.data;
+
+                    editor.file.name = file_info.name;
+                    editor.file.hash = file_info.hash;
+                    editor.file.size = file_info.size;
+                    editor.file.type = file_info.type;
+                    editor.file.is_stored = true;
+                    editor.file.file_info = file_info;
+
+                    editor.elements.preview.find('img').attr({ src: editor.file.file_info.url });
+                    editor.elements.cropper.find('img').attr({ src: editor.file.file_info.original_url });
+
+                    modifiers.defaultModifiers();
+                    _refreshPreview();
+                }).fail(function() {
+                    editor.element.find('.bu--panel-content').empty().append('<div class="file-load-error">Błąd ładowania pliku</div>');
+                    editor.element.find('.bu--panel-done').remove();
                 });
-            });
-        });
-    }
 
-    var _bindEvents = function() {
-        panel_elements.editor.menu.on('click', '.menu-action-button', function() {
-            var operation = $(this).data('effect-type');
-
-            if (effects.operations.hasOwnProperty(operation)) {
-                effects.operations[operation]();
+                return editor;
             }
         });
 
-        panel.done(function() {
-            var result = $.Deferred();
-            result.promise();
+        _panel = panel;
 
-            var modifiers = _modifiersStringBuilder(effects.applied);
-
-            $.post('/file/' + file.hash, { file: { modifiers: modifiers } }, function(response) {
-                result.resolve(response.data);
-            }, 'json').fail(function() {
-                result.reject();
-            });
-
-            editor.resolve(result);
-        });
-
-        panel.fail(function() { editor.reject(); });
-    }
-
-    var _onEffectChange = function() {
-        _refreshPreview();
+        return panel;
     };
 
-    var _modifiersStringBuilder = function(operations) {
-        var modifiers = [];
-        var modifiers_order = ['crop', 'resize', 'rotate', 'flip', 'mirror', 'grayscale', 'negative'];
-
-        for (var i = 0; i < modifiers_order.length; i++) {
-            var effect = modifiers_order[i];
-
-            if (!operations.hasOwnProperty(effect)) {
-                continue;
-            }
-
-            var modifier = [effect];
-            var params = operations[effect];
-
-            if (params === false) {
-                continue;
-            }
-
-            if (Array.isArray(params) && params.length > 0) {
-                for (var a = 0; a < params.length; a++) {
-                    modifier.push(params[a]);
-                }
-            }
-
-            var modifier_string = modifier.join('/') + '/';
-
-            modifiers.push(modifier_string);
-        }
-
-        var modifiers_string = (modifiers.length > 0) ? '-/' + modifiers.join('-/') : '';
-
-        return modifiers_string;
-    }
-
-    var _generateModifiedUrl = function() {
-        var applied_effects = $.extend(true, {}, effects.applied);
-        applied_effects.resize = ['900x900'];
-
-        var url = file.original_url + _modifiersStringBuilder(applied_effects);
-
-        return url;
-    }
-
-    var _cropper = function(aspect_ratio = null) {
-        var url = file.original_url;
-
-        panel_elements.cropper.wrapper.empty();
-
-        panel_elements.editor.container.hide();
-        panel_elements.cropper.container.show();
-
-        var cropper = $.Deferred();
-        cropper.promise();
-        cropper.url = _generateModifiedUrl();
-        cropper.element = $('<img src="' + url + '" alt="" />');
-        cropper.cropper = new Cropper(cropper.element[0], {
-            aspectRatio: aspect_ratio,
-            autoCropArea: 1,
-            dragMode: 'move',
-            restore: false,
-            viewMode: 1,
-            movable: false,
-            rotatable: false,
-            scalable: false,
-            zoomable: false,
-            zoomOnTouch: false,
-            zoomOnWheel: false,
-            toggleDragModeOnDblclick: false,
-            responsive: true,
-        });
-        cropper.getData = function() { return this.cropper.getData(true); };
-        cropper.close = function() {
-            this.cropper.destroy();
-            this.element.remove();
-
-            panel_elements.cropper.container.hide();
-            panel_elements.editor.container.show();
+    var Upload = function(file, source_file, transformations = {}) {
+        var upload = $.Deferred();
+        upload.file = {
+            file: file,
+            source: source_file,
+            transformations: transformations
         };
-
-        panel_elements.cropper.wrapper.append(cropper.element);
-
-
-        cropper.always(function() { cropper.close(); });
-        cropper.fail(function() {  });
-
-        panel_elements.cropper.menu.on('click', '.menu-action-button.action-done', function() {
-            cropper.resolve(cropper.getData());
-        });
-
-        panel_elements.cropper.menu.on('click', '.menu-action-button.action-reject', function() {
-            cropper.reject();
-        });
-
-        return cropper;
-    }
-
-    // Init editor
-    $.get('/file/' + file_hash, function(response) {
-        file = response.data;
-
-        panel.template.done(function() {
-            _renderEditor();
-
-            effects.applyDefaultEffects();
-        });
-    }, 'json').fail(function() {
-        throw 'Get file data error';
-    });
-
-    return editor;
-}
-
-var BookletUploaderFile = function(file_data, template) {
-    var name = file_data.name;
-    var hash = BookletUploaderHelpers.generateHash();
-    var size = file_data.size;
-    var type = file_data.type;
-
-    var _appendTransformationsData = function(form_data, transformations) {
-        if (typeof transformations.crop == 'undefined' || transformations.crop == 'free') {
-            transformations.crop = false;
-        }
-
-        if (transformations.crop) {
-            form_data.append('transformations[crop]', transformations.crop);
-        }
-
-        return form_data;
-    }
-
-    var file = $.extend($.Deferred(), {
-        name: name,
-        hash: hash,
-        name: name,
-        size: size,
-        type: type,
-        is_stored: false,
-        source: {
-            file: file_data,
-            source: 'local',
-        },
-        element: template.render(template.getSection('#booklet-uploader-file'), {
-            file_hash: hash,
-            file_name: name,
-            file_size: BookletUploaderHelpers.sizeToSizeString(size),
-        }),
-        xhr: null,
-        abort: function() {
-            if (this.xhr !== null && this.xhr.readyState !== 4) {
-                this.xhr.abort();
-            }
-        },
-        upload: function(endpoint, storage, transformations = {}) {
+        upload.request = null;
+        upload.data = function() {
             var data = new FormData();
+            data.append('hash_id', upload.file.file.hash);
+            data.append('source', upload.file.file.source);
+            data.append(0, upload.file.source, upload.file.file.name);
 
-            data.append('source', file.source.source);
-            data.append(0, file.source.file, file.name);
+            if (typeof upload.file.transformations.crop !== 'undefined' && upload.file.transformations.crop !== 'free') {
+                data.append('transformations[crop]', upload.file.transformations.crop);
+            }
 
-            data = _appendTransformationsData(data, transformations);
-
-            file.element.find('.booklet-uploader--upload-progress').show();
-
-            file.xhr = $.ajax({
-                url: endpoint,
+            return data;
+        };
+        upload.start = function() {
+            upload.request = $.ajax({
+                url: '/file/create',
                 method: 'POST',
-                data: data,
+                dataType:'json',
+                data: upload.data(),
                 cache: false,
                 contentType: false,
                 processData: false,
                 async: true,
-                xhr: function(){
+                xhr: function() {
                     var xhr = $.ajaxSettings.xhr();
-
                     xhr.upload.addEventListener('progress', function(e){
-                        file.element.find('.booklet-uploader--upload-progress .booklet-uploader--progressbar .booklet-uploader--progress').css({
-                            width: ((e.loaded * 100) / e.total) + '%'
-                        });
+                        var progress = (e.loaded * 100) / e.total;
+
+                        upload.notify(progress);
                     });
 
                     return xhr;
-                },
+                }
             }).done(function(response) {
-                response =  $.parseJSON(response);
-
-                file.resolve(response.data);
+                upload.resolve(response.data);
             }).fail(function(jqXHR, textStatus, errorThrown) {
-                file.reject(jqXHR, textStatus, errorThrown);
+                upload.reject(jqXHR, textStatus, errorThrown);
             });
-        },
-        delete: function() {
-            file.abort();
 
-            delete this[file.hash];
+            return upload;
+        };
+        upload.abort = function() {
+            if (upload.request && upload.request.readyState !== 4) {
+                upload.request.abort();
+            }
+
+            upload.reject();
+        };
+        upload.onProgress = function(progress) {};
+
+        return upload;
+    };
+    var File = function(file_data) {
+        var file = $.Deferred();
+        file.name = null;
+        file.hash = null;
+        file.size = null;
+        file.type = null;
+        file.is_stored = false;
+        file.transformations = {
+            applied: {},
+            apply: function(effect, params = []) {
+                file.transformations.applied[effect] = [];
+            },
+            remove: function(effect) {
+                delete file.transformations.applied[effect];
+            }
+        };
+        file.source = 'local';
+        file.element = null;
+        file.renderElement = function() {
+            var element_html = BookletUploaderTemplate.getHTML('file');
+
+            file.element = BookletUploaderTemplate.render(element_html, {
+                file_hash: file.hash,
+                file_name: file.name,
+                file_size: helpers.sizeToSizeString(file.size),
+            });
+
+            return file;
+        };
+        file.file_info = function() {
+            return $.ajax({
+                type: 'GET',
+                url: '/file/' + file.hash,
+                data: {},
+                dataType: 'json'
+            });
+        };
+        file.delete = function() {
+            if (file.hasOwnProperty('upload') && file.upload) {
+                file.upload.abort();
+            }
 
             file.element.fadeOut(300, function() { $(this).remove(); });
-        },
-        error: function(message) {
-            this.element.find('.booklet-uploader--file-details .booklet-uploader--upload-error').html(message);
-        }
-    });
+        };
+        file.error = function(message) {
+            file.element.find('.bu--file-details .bu--upload-error').html(message);
+        };
 
-    return file;
-}
+        return $.extend(file, file_data).renderElement();
+    }
+
+    return {
+        defaults: defaults,
+        helpers: helpers,
+        locale: locale,
+        openUploader: openUploader,
+        openEditor: openEditor,
+    }
+})();

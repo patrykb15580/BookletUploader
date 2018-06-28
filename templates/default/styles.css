@@ -1,8 +1,16 @@
-#booklet-uploader-files-picker {
+#bu--files-picker {
     display: none !important;
 }
 
-#booklet-uploader--dialog {
+.scroll-test {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+}
+
+#bu--dialog {
     display: block;
     background-color: rgba(0, 0, 0, 0.8);
     position: fixed;
@@ -14,82 +22,146 @@
     font-family: 'OpenSans';
 }
 
-#booklet-uploader--dialog * {
+#bu--dialog * {
     box-sizing: border-box;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel {
+#bu--dialog .bu--panel {
     display: flex;
-    background-color: #f3f1f2;
+    background-color: #ffffff;
     position: absolute;
     top: 50%;
     left: 50%;
     width: 100%;
     height: 100%;
     flex-direction: column;
-    padding: 0px;
-    border: 1px solid #cecece;
+    padding: 10px 15px;
+    border: none;
+    overflow: hidden;
     transform: translate(-50%, -50%);
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-header {
-    display: flex;
+#bu--dialog .bu--panel .bu--panel-header {
+    display: block;
     background-color: #ffffff;
     position: relative;
-    height: 80px;
-    flex: 0 0 80px;
-    align-items: center;
-    justify-content: center;
-    font-family: 'OpenSans Bold';
-    font-size: 20px;
+    height: 60px;
+    line-height: 50px;
+    flex: 0 0 60px;
+    font-family: 'OpenSans';
+    font-size: 28px;
+    font-weight: 300;
     text-align: center;
-    padding: 15px;
-    border-bottom: 1px solid #cecece;
+    padding: 0px 0px 10px 0px;
+    border-bottom: 2px solid #e8e8e8;
     overflow: hidden;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-header .booklet-uploader--dialog-close {
-    display: block;
-    background-color: transparent;
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    font-size: 26px;
-    color: #a4a2a1;
-    padding: 0px;
-    border: none;
-    cursor: pointer;
-    transform: translateY(-50%);
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-content {
+#bu--dialog .bu--panel .bu--panel-content {
     display: flex;
     position: relative;
     width: 100%;
-    height: calc(100% - 150px);
+    flex: 1 1 calc(100% - 150px);
     flex-direction: column;
-    padding: 15px 15px;
-    flex: 1 1 auto;
+    padding: 10px 0px;
     overflow: hidden;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-content > .booklet-uploader--loader {
+#bu--dialog .bu--panel .bu--panel-footer {
+    display: block;
+    background-color: #ffffff;
+    height: 60px;
+    flex: 0 0 60px;
+    padding: 10px 0px 0px 0px;
+    border-top: 1px solid #e3e1e2;
+    overflow: hidden;
+}
+
+#bu--dialog .bu--panel .bu--panel-footer .bu--footer-nav {
+    display: flex;
+    position: relative;
+    height: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    list-style-type: none;
+    margin: 0px -15px;
+    padding: 0px;
+}
+
+#bu--dialog .bu--panel .bu--panel-footer .bu--footer-nav .bu--footer-nav--left,
+#bu--dialog .bu--panel .bu--panel-footer .bu--footer-nav .bu--footer-nav--right {
+    display: block;
+    flex: 1 1 50%;
+    padding: 0px 15px;
+}
+
+
+#bu--dialog .bu--panel .bu--panel-footer .bu--footer-nav .bu--footer-nav--left {
+
+}
+
+#bu--dialog .bu--panel .bu--panel-footer .bu--footer-nav .bu--footer-nav--right {
+    text-align: right
+}
+
+
+
+#bu--dialog .bu--panel .bu--button {
+    display: inline-block;
+    background-color: transparent;
+    width: 100%;
+    max-width: 160px;
+    font-family: 'OpenSans Bold';
+    font-size: 16px;
+    font-weight: 300;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    color: #c1c1c1;
+    margin: 0px 0px 0px 0px;
+    padding: 6px 30px;
+    border: 1px solid #c1c1c1;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border 0.2s;
+}
+
+#bu--dialog .bu--panel .bu--button:hover {
+    color: #a1a1a1;
+    border: 1px solid #a1a1a1;
+}
+
+#bu--dialog .bu--panel .bu--button.bu--button-red {
+    color: #d80e24;
+    border: 1px solid #d80e24;
+}
+
+#bu--dialog .bu--panel .bu--button.bu--button-red:hover {
+    color: #a80b1d;
+    border: 1px solid #a80b1d;
+}
+
+#bu--dialog .bu--panel .bu--button.bu--button-primary {
+    background-color: #d80e24;
+    color: #FFFFFF;
+    margin: 0px 0px 0px 0px;
+    padding: 7px 31px;
+    border: none;
+}
+
+#bu--dialog .bu--panel .bu--button.bu--button-primary:hover {
+    background-color: #c00c21;
+    color: #FFFFFF;
+    border: none;
+}
+
+#bu--dialog .bu--panel .bu--panel-content > .bu--loader {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-footer {
-    display: flex;
-    background-color: #ffffff;
-    height: 70px;
-    flex: 0 0 70px;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-    border-top: 1px solid #cecece;
-    overflow: hidden;
 }
 
 @media only screen and (min-width: 576px) {
@@ -97,10 +169,12 @@
 }
 
 @media only screen and (min-width: 768px) {
-    #booklet-uploader--dialog .booklet-uploader--panel {
+    #bu--dialog .bu--panel {
         width: 90vw;
-        max-width: 900px;
-        max-height: 90vh;
+        height: 90vh;
+        max-width: 1170px;
+        max-height: 700px;
+        padding: 10px 30px;
     }
 }
 
@@ -111,282 +185,292 @@
 @media only screen and (min-width: 1200px) {
 
 }
-
 
 
 /*
  *     Uploader
  */
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--files-counter {
-    display: block;
-    font-size: 14px;
-    color: #aeaeae;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--dialog-done {
-    display: block;
-    background-color: #d80e24;
-    font-family: 'OpenSans Bold';
-    font-size: 14px;
-    font-weight: 300;
-    text-align: center;
-    text-decoration: none;
-    color: #FFFFFF;
-    margin: 0px 0px 0px auto;
-    padding: 6px 30px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--dialog-done:hover {
-    background-color: #c00c21;
-}
-
-/* Drop area */
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area {
+#bu--dialog.bu--uploader .bu--panel-content {
     display: flex;
-    background-color: transparent;
-    position: relative;
-    width: 100%;
-    height: 80px;
-    flex: 0 0 80px;
-    align-items: center;
-    justify-content: center;
+    height: 100%;
     flex-direction: column;
-    margin: 0px 0px 4px 0px;
-    padding: 0px;
-    border: none;
-    transition: background-color 0.2s, opacity 0.2s;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--drop-area-text {
-    display: none;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--select-files {
-    display: block;
-    background-color: #d80e24;
-    width: 100%;
-    max-width: 320px;
-    font-family: 'OpenSans Bold';
-    font-size: 14px;
-    font-weight: 300;
-    text-align: center;
-    text-decoration: none;
-    color: #FFFFFF;
+    flex-wrap: wrap;
     margin: 0px;
-    padding: 12px 0px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--select-files:hover {
-    background-color: #c00c21;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--max-file-size-info {
-    display: block;
-    line-height: 1.6em;
-    font-size: 10px;
-    text-align: center;
-    color: #818181;
-    margin-top: 10px;
-}
-
-
-/* Files list */
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list {
-    display: block;
-    flex: 1 1 auto;
-    list-style-type: none;
-    margin: 0px 0px 0px 0px;
-    padding: 6px 0px 0px 0px;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file {
-    display: flex;
-    background-color: #ffffff;
-    position: relative;
-    width: 100%;
-    height: 70px;
-    flex: 0 0 100%;
-    align-items: center;
-    margin: 0px 0px 6px 0px;
-    padding: 0px;
-    border: 1px solid #cecece;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-preview {
-    display: flex;
-    background-color: #ffffff;
-    width: 68px;
-    height: 68px;
-    flex: 0 0 68px;
-    align-items: center;
-    align-content: center;
-    justify-content: center;
     overflow: hidden;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-preview img {
+#bu--dialog.bu--uploader .bu--panel-content .bu--choose-files-section {
+    display: flex;
+    width: 100%;
+    flex: 0 0 80px;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0px;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--drop-area {
+    display: none;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--select-files {
+    max-width: 500px;
+    padding: 10px 0px;
+    margin: 0px auto;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--max-file-size-info {
+    font-family: 'OpenSans Bold';
+    font-size: 14px;
+    text-align: center;
+    color: #919191;
+    margin: 8px 0px;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--selected-files-section {
     display: block;
-    width: auto;
-    height: auto;
+    width: 100%;
+    flex: 1 1 calc(100% - 114px);
+    padding: 0px;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list {
+    display: block;
+    width: calc(100% + 40px);
+    height: 100%;
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px 40px 0px 0px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file {
+    display: flex;
+    background-color: #ffffff;
+    width: 100%;
+    flex-wrap: nowrap;
+    align-items: center;
+    padding: 10px 0px;
+    margin: 0px;
+    border: none;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: default;
+    transition: background-color 0.2s;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file:hover {
+    background-color: #f9f7f8;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file:last-child {
+    border-bottom: none;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-preview {
+    display: flex;
+    background-color: #e9e7e8;
+    position: relative;
+    height: 60px;
+    flex: 0 0 60px;
+    justify-content: center;
+    align-items: center;
+    margin: 0px 0px 0px 10px;
+    padding: 0px;
+    border: 1px solid #e9e7e8;
+    border-radius: 5px;
+    overflow: hidden;
+    transition: background-color 0.2s;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file.uploaded .bu--file-preview {
+    background-color: transparent;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-preview img {
     max-width: 100%;
     max-height: 100%;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-details {
-    min-width: 80px;
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details {
+    display: flex;
     flex: 1 1 auto;
-    padding: 0px 15px;
+    flex-wrap: wrap;
+    margin: 0px;
+    padding: 0px 10px;
     overflow: hidden;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-details .booklet-uploader--file-name {
-    display: block;
-    line-height: 1.6em;
-    font-size: 18px;
-    white-space: nowrap;
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-name {
+    max-width: calc(100% - 54px);
+    flex: 0 0 calc(100% - 54px);
+    font-family: 'OpenSans Bold';
     text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #5c5c5c;
     overflow: hidden;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-details .booklet-uploader--file-size {
-    display: block;
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-size {
+    display: flex;
+    max-width: 54px;
+    flex: 0 0 54px;
+    justify-content: flex-end;
+    align-items: center;
+    font-family: 'OpenSans Bold';
     font-size: 12px;
-    color: #cecece;
-    margin-top: 0px;
+    color: #a3a1a2;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-details .booklet-uploader--upload-error {
-    display: block;
-    font-size: 10px;
-    color: #d80e24;
-    margin-top: 0px;
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress {
+    flex: 0 0 100%;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--upload-progress {
-    max-width: 100px;
-    flex: 0 0 100px;
-    padding: 0px 15px;
-}
-
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--upload-progress .booklet-uploader--progressbar {
-    background-color: #cecece;
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--progressbar {
+    display: none;
+    background-color: #e9e7e8;
     width: 100%;
-    height: 14px;
+    height: 10px;
+    margin: 6px 0px 0px 0px;
     border: none;
-    border-radius: 8px;
+    border-radius: 5px;
     overflow: hidden;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--upload-progress .booklet-uploader--progressbar .booklet-uploader--progress {
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--progressbar .bu--progress {
     display: block;
     background-color: #d80e24;
-    width: 0px;
+    width: 0%;
     height: 100%;
     border: none;
-    transition: width 0.1s;
+    border-radius: 5px;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-actions {
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-actions {
     display: flex;
-    max-width: 100px;
-    flex: 1 1 auto;
-    align-items: flex-start;
     flex-direction: row-reverse;
-    padding: 0px 15px;
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px 10px;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-actions .booklet-uploader--file-action-button {
-    display: inline-block;
-    background-color: transparent;
-    font-size: 20px;
-    text-align: center;
-    color: #646261;
-    align-self: flex-start;
-    margin: 0px 0px 0px 10px;
-    padding: 0px;
-    border: none;
-    border-radius: 50%;
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-actions .bu--file-action-button {
+    font-size: 26px;
+    color: #a3a1a2;
     cursor: pointer;
     transition: color 0.2s;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-actions .booklet-uploader--file-action-button:hover {
-    background-color: transparent;
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-actions .bu--file-action-button:hover {
+    color: #848484;
+}
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--file-upload-error {
+    font-size: 12px;
     color: #d80e24;
 }
 
+
+#bu--dialog.bu--uploader .bu--panel-content .bu--files-counter {
+    display: block;
+    width: 100%;
+    height: 34px;
+    flex: 0 0 34px;
+    font-family: 'OpenSans Bold';
+    text-align: center;
+    color: #919191;
+    padding: 10px 0px 0px 0px;
+}
+
+
+
 @media only screen and (min-width: 576px) {
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--max-file-size-info {
-        font-size: 12px;
-    }
 
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--upload-progress {
-        max-width: 120px;
-        flex: 0 0 120px;
-    }
-
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--files-list .booklet-uploader--file .booklet-uploader--file-details .booklet-uploader--upload-error {
-        font-size: 12px;
-    }
-
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--panel-footer .booklet-uploader--dialog-done {
-        padding: 10px 40px;
-    }
 }
 
 @media only screen and (min-width: 768px) {
-    #booklet-uploader--dialog .booklet-uploader--panel {
-        width: 90vw;
-        max-width: 900px;
-        max-height: 90vh;
+    #bu--dialog.bu--uploader .bu--panel-content {
+        width: 100%;
+        flex-direction: row;
+        margin: 0px;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--choose-files-section {
+        height: calc(100% - 34px);
+        flex: 1 1 50%;
+        justify-content: flex-start;
+        padding-right: 15px;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--drop-area {
+        display: flex;
+        background-color: #f6f6f6;
+        position: relative;
+        width: 100%;
+        height: 60%;
+        max-height: 300px;
+        flex: 0 0 60%;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        font-family: 'OpenSans Bold';
+        font-size: 16px;
+        font-weight: 300;
+        color: #c3c1c2;
+        margin: 0px 0px 20px 0px;
+        padding: 0px 0px 0px 0px;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        transition: color 0.2s, border 0.2s;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--drop-area.active {
+        color: #d80e24;
+        border: 2px solid #d80e24;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--drop-area .upload-icon {
+        font-size: 36px;
+        margin-bottom: 10px;
+        transition: font-size 0.2s;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--select-files {
+        max-width: 240px;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--max-file-size-info {
+        margin: 15px 0px;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--selected-files-section {
+        height: calc(100% - 34px);
+        flex: 1 1 50%;
+        padding-left: 15px;
+        overflow: hidden;
+    }
+
+    #bu--dialog.bu--uploader .bu--panel-content .bu--files-counter {
+        flex: 0 0 100%;
     }
 }
 
 @media only screen and (min-width: 992px) {
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area {
-        height: 200px;
-        flex: 0 0 200px;
-        padding: 15px;
-        border: 2px dashed #cecece;
+    #bu--dialog.bu--uploader .bu--panel-content .bu--choose-files-section {
+        flex: 1 1 45%;
     }
 
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area.drag-in {
-        background-color: #feefb3;
-    }
-
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--drop-area-text {
-        display: block;
-        line-height: 1.6em;
-        font-family: 'OpenSans Bold';
-        font-size: 18px;
-        text-align: center;
-        color: #818181;
-    }
-
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--select-files {
-        font-size: 14px;
-        margin: 6px 0px;
-    }
-
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area .booklet-uploader--max-file-size-info {
-        font-size: 13px;
+    #bu--dialog.bu--uploader .bu--panel-content .bu--selected-files-section {
+        flex: 1 1 55%;
     }
 }
 
 @media only screen and (min-width: 1200px) {
-    #booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--drop-area {
-        height: 240px;
-        flex: 0 0 240px;
-    }
+
 }
 
 /* Uploader end //////////////////////////////////////////////////////////////*/
@@ -395,14 +479,422 @@
  *    Editor
  */
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor {
+#bu--dialog.bu--editor .bu--panel-content {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    margin: 0px;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .file-load-error {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    font-size: 26px;
+    text-align: center;
+    color: #d80e24;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar {
     display: block;
+    width: 100%;
+    flex: 0 0 59px;
+    order: 2;
+    margin: 0px;
+    padding: 10px 0px 0px 0px;
+    border-top: 1px solid #cecece;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar .bu--editor-menu {
+    display: flex;
+    height: calc(100% + 40px);
+    flex-direction: row;
+    flex-wrap: nowrap;
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px 0px 40px 0px;
+    overflow-y: hidden;
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar .bu--editor-menu .bu--editor-menu-item {
+    display: inline-flex;
+    min-width: 80px;
+    height: 48px;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    margin: 0px;
+    padding: 0px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar .bu--editor-menu .bu--editor-menu-item.active {
+    font-family: 'OpenSans Bold';
+    color: #d80e24;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-content {
+    display: block;
+    width: 100%;
+    flex: 1 1 calc(100% - 59px);
+    order: 1;
+    padding: 0px;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-content .bu--editor-preview {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-content .bu--editor-preview img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-content .bu--image-cropper {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-content .bu--image-cropper .bu--cropper-preview {
+    max-height: 100%;
+    flex: 0 0 calc(100% - 40px);
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-content .bu--image-cropper .bu--cropper-preview img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+
+@media only screen and (min-width: 576px) {
+
+}
+
+@media only screen and (min-width: 768px) {
+    #bu--dialog.bu--editor .bu--panel-content {
+        flex-direction: row;
+    }
+
+    #bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar {
+        display: block;
+        width: 100%;
+        flex: 0 0 91px;
+        order: 1;
+        margin: 0px;
+        padding: 0px 10px 0px 0px;
+        border-top: none;
+        border-right: 1px solid #cecece;
+        overflow: hidden;
+    }
+
+    #bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar .bu--editor-menu {
+        width: calc(100% + 40px);
+        height: 100%;
+        flex-direction: column;
+        margin: 0px;
+        padding: 0px 40px 0px 0px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+
+    #bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar .bu--editor-menu .bu--editor-menu-item {
+        display: inline-flex;
+        width: 80px;
+        min-width: 0px;
+        height: 80px;
+        flex: 0 0 80px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        text-align: center;
+        margin: 0px;
+        padding: 15px 0px;
+        cursor: pointer;
+    }
+
+    #bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar .bu--editor-menu .bu--editor-menu-item:first-child {
+        margin-top: 0px;
+    }
+
+    #bu--dialog.bu--editor .bu--panel-content .bu--editor-sidebar .bu--editor-menu .bu--editor-menu-item:last-child {
+        margin-bottom: 0px;
+    }
+
+    #bu--dialog.bu--editor .bu--panel-content .bu--editor-content {
+        width: 100%;
+        flex: 1 1 calc(100% - 91px);
+        order: 2;
+        padding: 0px 0px 0px 15px;
+    }
+}
+
+@media only screen and (min-width: 992px) {
+
+}
+
+@media only screen and (min-width: 1200px) {
+
+}
+
+
+
+
+
+
+
+
+/*
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper {
+    display: none;
     width: 100%;
     height: 100%;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor,
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper {
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-wrapper {
+    width: 100%;
+    height: calc(100% - 60px);
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions {
+    display: flex;
+    height: 60px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    list-style-type: none;
+    margin: 0px -15px;
+    border-top: 1px solid #e3e1e2;
+    padding: 10px 0px 0px 0px;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action {
+    flex: 1 1 50%;
+    padding: 0px 15px;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action .bu--cropper-close,
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action .bu--cropper-done {
+    display: block;
+    background-color: #d80e24;
+    width: 100%;
+    max-width: 160px;
+    font-family: 'OpenSans Bold';
+    font-size: 16px;
+    font-weight: 300;
+    text-align: center;
+    text-decoration: none;
+    color: #FFFFFF;
+    margin: 0px 0px 0px 0px;
+    padding: 6px 30px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border 0.2s;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action .bu--cropper-close:hover,
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action .bu--cropper-done:hover {
+    background-color: #c00c21;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action .bu--cropper-close {
+    background-color: transparent;
+    color: #c1c1c1;
+    border: 1px solid #c1c1c1;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action .bu--cropper-close:hover {
+    background-color: transparent;
+    color: #a1a1a1;
+    border: 1px solid #a1a1a1;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--editor-cropper .bu--cropper-actions .bu--cropper-action .bu--cropper-done {
+    margin-left: auto;
+    padding: 7px 31px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+#bu--dialog.bu--editor .bu--panel-content .bu--choose-files-section {
+    display: flex;
+    width: 100%;
+    flex: 0 0 80px;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0px;
+    overflow: hidden;
+}
+
+#bu--dialog.bu--editor .bu--panel-content .bu--selected-files-section {
+    display: block;
+    width: 100%;
+    flex: 1 1 calc(100% - 80px);
+    padding: 0px;
+    overflow: hidden;
+}*/
+
+
+
+
+
+/*#bu--dialog .bu--panel .bu--file-editor .editor-sidebar {
+    display: inline-block;
+    background-color: #ffffff;
+    height: 60px;
+    flex: 0 0 60px;
+    order: 2;
+    padding: 0px;
+    margin: 0px;
+    border-top: 1px solid #cecece;
+    overflow: hidden;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar .sidebar-menu {
+    display: flex;
+    width: auto;
+    height: 100px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    list-style-type: none;
+    padding: 0px 0px 40px 0px;
+    margin: 0px;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar .sidebar-menu li {
+    display: flex;
+    width: 100px;
+    height: 60px;
+    flex: 0 0 100px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar li:hover {
+    background-color: #e6e4e5;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar li .bu--icon {
+    flex: 0 0 auto;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar li label {
+    font-size: 14px;
+    margin: 0px;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-content {
+    display: flex;
+    max-height: calc(100% - 60px);
+    flex: 1 1 auto;
+    order: 1;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    margin: 0px;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-content .file-preview {
+    max-height: 100%;
+    flex: 0 0 100%;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-content .file-preview img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-content .cropper {
+    display: none;
+}
+
+
+
+
+
+/*#bu--dialog .bu--panel .bu--file-editor .editor-sidebar .editor-menu {
+    display: flex;
+
+    list-style-type: none;
+    padding: 0px;
+    margin: 0px;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar .editor-menu li {
+    text-align: center;
+    padding: 0px 15px 0px 0px;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar > li {
+    display: none;
+}
+
+#bu--dialog .bu--panel .bu--file-editor .editor-sidebar > li.editor-actions {
+    display: block;
+}
+
+
+
+#bu--dialog .bu--panel .bu--file-editor .editor-content .file-preview {
+    max-width: 100%;
+    max-height: 100%;
+}*/
+
+
+
+
+
+
+
+
+
+/*#bu--dialog .bu--panel .bu--file-editor .view-editor,
+#bu--dialog .bu--panel .bu--file-editor .view-cropper {
     display: flex;
     position: relative;
     width: 100%;
@@ -411,8 +903,8 @@
     align-items: center;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-preview,
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-wrapper {
+#bu--dialog .bu--panel .bu--file-editor .view-editor .editor-preview,
+#bu--dialog .bu--panel .bu--file-editor .view-cropper .cropper-wrapper {
     display: flex;
     position: relative;
     width: 100%;
@@ -425,7 +917,7 @@
     overflow: hidden;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-preview > .booklet-uploader--loader {
+#bu--dialog .bu--panel .bu--file-editor .view-editor .editor-preview > .bu--loader {
     display: block;
     position: absolute;
     top: 50%;
@@ -433,18 +925,18 @@
     transform: translate(-50%, -50%);
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-preview img {
+#bu--dialog .bu--panel .bu--file-editor .view-editor .editor-preview img {
     max-width: 100%;
     max-height: 100%;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-wrapper img {
+#bu--dialog .bu--panel .bu--file-editor .view-cropper .cropper-wrapper img {
     max-width: none;
     min-height: 100%;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu,
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu {
+#bu--dialog .bu--panel .bu--file-editor .view-editor .editor-menu,
+#bu--dialog .bu--panel .bu--file-editor .view-cropper .cropper-menu {
     display: flex;
     width: calc(100% + 30px);
     flex: 0 0 60px;
@@ -455,13 +947,13 @@
     border-top: 1px solid #cecece;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu .menu-item,
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu .menu-item {
+#bu--dialog .bu--panel .bu--file-editor .view-editor .editor-menu .menu-item,
+#bu--dialog .bu--panel .bu--file-editor .view-cropper .cropper-menu .menu-item {
     display: block;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu .menu-action-button,
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu .menu-action-button {
+#bu--dialog .bu--panel .bu--file-editor .view-editor .editor-menu .menu-action-button,
+#bu--dialog .bu--panel .bu--file-editor .view-cropper .cropper-menu .menu-action-button {
     display: flex;
     background-color: #ffffff;
     width: 45px;
@@ -476,8 +968,8 @@
     transition: background-color 0.2s;
 }
 
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-editor .editor-menu .menu-action-button:hover,
-#booklet-uploader--dialog .booklet-uploader--panel .booklet-uploader--file-editor .view-cropper .cropper-menu .menu-action-button:hover {
+#bu--dialog .bu--panel .bu--file-editor .view-editor .editor-menu .menu-action-button:hover,
+#bu--dialog .bu--panel .bu--file-editor .view-cropper .cropper-menu .menu-action-button:hover {
     background-color: #e3e1e2;
 }
 
@@ -495,7 +987,7 @@
 
 @media only screen and (min-width: 1200px) {
 
-}
+}*/
 
 /* Editor end ////////////////////////////////////////////////////////////////*/
 
@@ -503,7 +995,7 @@
 
 
 /* Icons */
-.booklet-uploader--icon {
+.bu--icon {
     display: inline-block;
     width: 32px;
     height: 32px;
@@ -533,53 +1025,241 @@
     height: 64px;
 }*/
 
-.booklet-uploader--icon.icon-crop {
+
+
+
+
+
+/* Icon - crop */
+.bu--icon.icon-crop {
+    background: url('../../assets/icons/icons.svg') calc(0px * 0.5) calc(0px * 0.5) no-repeat;
+    background-size: calc(1000px * 0.5) calc(1000px * 0.5);
+    width: 16px;
+    height: 16px;
+}
+
+.bu--icon.icon-crop.sm {
+    background: url('../../assets/icons/icons.svg') calc(0px * 0.75) calc(0px * 0.75) no-repeat;
+    background-size: calc(1000px * 0.75) calc(1000px * 0.75);
+    width: 24px;
+    height: 24px;
+}
+
+.bu--icon.icon-crop.md {
     background: url('../../assets/icons/icons.svg') 0px 0px no-repeat;
     width: 32px;
     height: 32px;
 }
 
-.booklet-uploader--icon.icon-rotate {
+.bu--icon.icon-crop.lg {
+    background: url('../../assets/icons/icons.svg') calc(0px * 1.25) calc(0px * 1.25) no-repeat;
+    background-size: calc(1000px * 1.25) calc(1000px * 1.25);
+    width: 40px;
+    height: 40px;
+}
+
+.bu--icon.icon-crop.xl {
+    background: url('../../assets/icons/icons.svg') calc(0px * 1.5) calc(0px * 1.5) no-repeat;
+    background-size: calc(1000px * 1.5) calc(1000px * 1.5);
+    width: 48px;
+    height: 48px;
+}
+
+
+/* Icon - rotate */
+.bu--icon.icon-rotate {
+    background: url('../../assets/icons/icons.svg') calc(-32px * 0.5) calc(0px * 0.5) no-repeat;
+    background-size: calc(1000px * 0.5) calc(1000px * 0.5);
+    width: 16px;
+    height: 16px;
+}
+
+.bu--icon.icon-rotate.sm {
+    background: url('../../assets/icons/icons.svg') calc(-32px * 0.75) calc(0px * 0.75) no-repeat;
+    background-size: calc(1000px * 0.75) calc(1000px * 0.75);
+    width: 24px;
+    height: 24px;
+}
+
+.bu--icon.icon-rotate.md {
     background: url('../../assets/icons/icons.svg') -32px 0px no-repeat;
     width: 32px;
     height: 32px;
 }
 
-.booklet-uploader--icon.icon-flip {
+.bu--icon.icon-rotate.lg {
+    background: url('../../assets/icons/icons.svg') calc(-32px * 1.25) calc(0px * 1.25) no-repeat;
+    background-size: calc(1000px * 1.25) calc(1000px * 1.25);
+    width: 40px;
+    height: 40px;
+}
+
+.bu--icon.icon-rotate.xl {
+    background: url('../../assets/icons/icons.svg') calc(-32px * 1.5) calc(0px * 1.5) no-repeat;
+    background-size: calc(1000px * 1.5) calc(1000px * 1.5);
+    width: 48px;
+    height: 48px;
+}
+
+
+
+/* Icon - flip */
+.bu--icon.icon-flip {
+    background: url('../../assets/icons/icons.svg') calc(-64px * 0.5) calc(0px * 0.5) no-repeat;
+    background-size: calc(1000px * 0.5) calc(1000px * 0.5);
+    width: 16px;
+    height: 16px;
+}
+
+.bu--icon.icon-flip.sm {
+    background: url('../../assets/icons/icons.svg') calc(-64px * 0.75) calc(0px * 0.75) no-repeat;
+    background-size: calc(1000px * 0.75) calc(1000px * 0.75);
+    width: 24px;
+    height: 24px;
+}
+
+.bu--icon.icon-flip.md {
     background: url('../../assets/icons/icons.svg') -64px 0px no-repeat;
     width: 32px;
     height: 32px;
 }
 
-.booklet-uploader--icon.icon-mirror {
+.bu--icon.icon-flip.lg {
+    background: url('../../assets/icons/icons.svg') calc(-64px * 1.25) calc(0px * 1.25) no-repeat;
+    background-size: calc(1000px * 1.25) calc(1000px * 1.25);
+    width: 40px;
+    height: 40px;
+}
+
+.bu--icon.icon-flip.xl {
+    background: url('../../assets/icons/icons.svg') calc(-64px * 1.5) calc(0px * 1.5) no-repeat;
+    background-size: calc(1000px * 1.5) calc(1000px * 1.5);
+    width: 48px;
+    height: 48px;
+}
+
+
+
+/* Icon - mirror */
+.bu--icon.icon-mirror {
+    background: url('../../assets/icons/icons.svg') calc(-96px * 0.5) calc(0px * 0.5) no-repeat;
+    background-size: calc(1000px * 0.5) calc(1000px * 0.5);
+    width: 16px;
+    height: 16px;
+}
+
+.bu--icon.icon-mirror.sm {
+    background: url('../../assets/icons/icons.svg') calc(-96px * 0.75) calc(0px * 0.75) no-repeat;
+    background-size: calc(1000px * 0.75) calc(1000px * 0.75);
+    width: 24px;
+    height: 24px;
+}
+
+.bu--icon.icon-mirror.md {
     background: url('../../assets/icons/icons.svg') -96px 0px no-repeat;
     width: 32px;
     height: 32px;
 }
 
-.booklet-uploader--icon.icon-grayscale {
+.bu--icon.icon-mirror.lg {
+    background: url('../../assets/icons/icons.svg') calc(-96px * 1.25) calc(0px * 1.25) no-repeat;
+    background-size: calc(1000px * 1.25) calc(1000px * 1.25);
+    width: 40px;
+    height: 40px;
+}
+
+.bu--icon.icon-mirror.xl {
+    background: url('../../assets/icons/icons.svg') calc(-96px * 1.5) calc(0px * 1.5) no-repeat;
+    background-size: calc(1000px * 1.5) calc(1000px * 1.5);
+    width: 48px;
+    height: 48px;
+}
+
+
+
+/* Icon - grayscale */
+.bu--icon.icon-grayscale {
+    background: url('../../assets/icons/icons.svg') calc(-128px * 0.5) calc(0px * 0.5) no-repeat;
+    background-size: calc(1000px * 0.5) calc(1000px * 0.5);
+    width: 16px;
+    height: 16px;
+}
+
+.bu--icon.icon-grayscale.sm {
+    background: url('../../assets/icons/icons.svg') calc(-128px * 0.75) calc(0px * 0.75) no-repeat;
+    background-size: calc(1000px * 0.75) calc(1000px * 0.75);
+    width: 24px;
+    height: 24px;
+}
+
+.bu--icon.icon-grayscale.md {
     background: url('../../assets/icons/icons.svg') -128px 0px no-repeat;
     width: 32px;
     height: 32px;
 }
 
-.booklet-uploader--icon.icon-negative {
+.bu--icon.icon-grayscale.lg {
+    background: url('../../assets/icons/icons.svg') calc(-128px * 1.25) calc(0px * 1.25) no-repeat;
+    background-size: calc(1000px * 1.25) calc(1000px * 1.25);
+    width: 40px;
+    height: 40px;
+}
+
+.bu--icon.icon-grayscale.xl {
+    background: url('../../assets/icons/icons.svg') calc(-128px * 1.5) calc(0px * 1.5) no-repeat;
+    background-size: calc(1000px * 1.5) calc(1000px * 1.5);
+    width: 48px;
+    height: 48px;
+}
+
+
+
+/* Icon - negative */
+.bu--icon.icon-negative {
+    background: url('../../assets/icons/icons.svg') calc(-160px * 0.5) calc(0px * 0.5) no-repeat;
+    background-size: calc(1000px * 0.5) calc(1000px * 0.5);
+    width: 16px;
+    height: 16px;
+}
+
+.bu--icon.icon-negative.sm {
+    background: url('../../assets/icons/icons.svg') calc(-160px * 0.75) calc(0px * 0.75) no-repeat;
+    background-size: calc(1000px * 0.75) calc(1000px * 0.75);
+    width: 24px;
+    height: 24px;
+}
+
+.bu--icon.icon-negative.md {
     background: url('../../assets/icons/icons.svg') -160px 0px no-repeat;
     width: 32px;
     height: 32px;
 }
 
+.bu--icon.icon-negative.lg {
+    background: url('../../assets/icons/icons.svg') calc(-160px * 1.25) calc(0px * 1.25) no-repeat;
+    background-size: calc(1000px * 1.25) calc(1000px * 1.25);
+    width: 40px;
+    height: 40px;
+}
+
+.bu--icon.icon-negative.xl {
+    background: url('../../assets/icons/icons.svg') calc(-160px * 1.5) calc(0px * 1.5) no-repeat;
+    background-size: calc(1000px * 1.5) calc(1000px * 1.5);
+    width: 48px;
+    height: 48px;
+}
+
 
 
 /* Loader */
-#booklet-uploader--dialog .booklet-uploader--loader {
+#bu--dialog .bu--loader {
     display: inline-block;
     position: relative;
     width: 20px;
     height: 20px;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader:before {
+#bu--dialog .bu--loader:before {
     content: '';
     box-sizing: border-box;
     position: absolute;
@@ -595,48 +1275,48 @@
     animation: booklet-uploader-spinner .6s linear infinite;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.sm {
+#bu--dialog .bu--loader.sm {
     width: 30px;
     height: 30px;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.sm:before {
+#bu--dialog .bu--loader.sm:before {
     margin-top: -15px;
     margin-left: -15px;
     border-top: 3px solid #D80E24;
     border-right: 3px solid transparent;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.md {
+#bu--dialog .bu--loader.md {
     width: 40px;
     height: 40px;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.md:before {
+#bu--dialog .bu--loader.md:before {
     margin-top: -20px;
     margin-left: -20px;
     border-top: 3px solid #D80E24;
     border-right: 3px solid transparent;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.lg {
+#bu--dialog .bu--loader.lg {
     width: 60px;
     height: 60px;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.lg:before {
+#bu--dialog .bu--loader.lg:before {
     margin-top: -30px;
     margin-left: -30px;
     border-top: 4px solid #D80E24;
     border-right: 4px solid transparent;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.xl {
+#bu--dialog .bu--loader.xl {
     width: 100px;
     height: 100px;
 }
 
-#booklet-uploader--dialog .booklet-uploader--loader.xl:before {
+#bu--dialog .bu--loader.xl:before {
     margin-top: -50px;
     margin-left: -50px;
     border-top: 6px solid #D80E24;

@@ -6,11 +6,6 @@ namespace Booklet\Uploader;
  */
 class MimeType
 {
-    function __construct(argument)
-    {
-        // code...
-    }
-
     public static function mimeToExtension($mime)
     {
         $mimes = [
