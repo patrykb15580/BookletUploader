@@ -26,13 +26,30 @@ class Image
         $this->file_path = $file_path;
         $this->modifiers = ltrim($modifiers, '-/');
         $this->sig = ImageUtils::sig($file_hash, $modifiers);
+    }
 
-        $this->editor = new EditorImagick($file_path);
+    public function output()
+    {
+        $file = glob(self::TRANSFORMED_FILES_DIR . $this->sig . '.*')[0] ?? false;
+
+        if ($file) {
+            $filename = basename($this->file_path);
+            $extension = pathinfo($filename, PATHINFO_EXTENSION);;
+            $file_type = mime_content_type($file);
+
+            header('Content-type: ' . $file_type);
+            header('Content-Disposition: inline; filename=' . $filename . $extension . ';');
+
+            readfile($file);
+        } else {
+            $this->transform();
+            $this->editor->output($this->sig);
+        }
     }
 
     public function transform()
     {
-        $modifiers = [];
+        $this->editor = new EditorImagick($this->file_path);
 
         foreach (explode('-/', $this->modifiers) as $modifier) {
             $modifier_parts = explode('/', $modifier);
@@ -44,8 +61,6 @@ class Image
                 $this->{$transformation}($params);
             }
         }
-
-        $this->editor->output($this->sig);
     }
 
     private function resize($params) {
