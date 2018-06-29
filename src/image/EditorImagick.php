@@ -1,11 +1,11 @@
 <?php
 namespace Booklet\Uploader\Image;
 
-class Imagick implements Editor
+class EditorImagick implements Editor
 {
     function __construct()
     {
-        
+
     }
 
     public function resize($width, $height) {
