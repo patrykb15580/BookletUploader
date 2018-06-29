@@ -117,10 +117,12 @@ class Image
     private function preview($params) {
         $width = 600;
         $height = 600;
-        $quality = $params[1] ?? 75;
+        $quality = intval($params[1] ?? 75);
 
         if (isset($params[0])) {
-            list($width, $height) = explode('x', $params[0]);
+            $dimensions = explode('x', $params[0]);
+            $width = intval($dimensions[0]);
+            $height = intval($dimensions[1]);
         }
 
         $this->editor->preview($width, $height, $quality);

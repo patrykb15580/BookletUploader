@@ -3,6 +3,7 @@ namespace Booklet\Uploader;
 
 use Config;
 use PathHelper;
+use Booklet\Uploader\Image\Image as Image;
 
 trait FileTrait
 {
@@ -86,57 +87,11 @@ trait FileTrait
 
     public function transformedFileSignture($modifiers = '')
     {
-        return md5($this->id . $modifiers);
-    }
-
-    public function transformedFilePath($modifiers = '')
-    {
-        $editor_temp_dir = ImageEditor::TEMP_FILES_DIR;
-        $signature = $this->transformedFileSignture($modifiers);
-        $extension = '.' . MimeType::mimeToExtension($this->type);
-
-        return $editor_temp_dir . $signature . $extension;
-    }
-
-    public function transformedFileExists($modifiers = '')
-    {
-        $file_path = $thid->transformedFilePath($modifiers);
-
-        return file_exists($file_path);
+        return md5($this->hash_id . $modifiers);
     }
 
     public function preview()
     {
-        // Define previews files paths
-        // Config::set('booklet_uploader_previews_paths', [
-        //     'default' => 'previews_dir/file.svg',
-        //     'application/postscript' => 'previews_dir/ai.svg',
-        //     'application/illustrator' => 'previews_dir/ai.svg',
-        //     'video/x-msvideo' => 'previews_dir/avi.svg',
-        //     'image/x-windows-bmp' => 'previews_dir/bmp.svg',
-        //     'text/css' => 'previews_dir/css.svg',
-        //     'application/msword' => 'previews_dir/doc.svg',
-        //     'application/postscript' => 'previews_dir/eps.svg',
-        //     'image/gif' => 'previews_dir/gif.svg',
-        //     'text/html' => 'previews_dir/html.svg',
-        //     'image/pjpeg' => 'previews_dir/jpg.svg',
-        //     'text/ecmascript' => 'previews_dir/js.svg',
-        //     'x-music/x-midi' => 'previews_dir/midi.svg',
-        //     'video/quicktime' => 'previews_dir/mov.svg',
-        //     'video/x-mpeg' => 'previews_dir/mp3.svg',
-        //     'video/mpeg' => 'previews_dir/mpg.svg',
-        //     'application/pdf' => 'previews_dir/pdf.svg',
-        //     'image/png' => 'previews_dir/png.svg',
-        //     'application/x-mspowerpoint' => 'previews_dir/ppt.svg',
-        //     'application/postscript' => 'previews_dir/ps.svg',
-        //     'application/octet-stream' => 'previews_dir/psd.svg',
-        //     'image/x-tiff' => 'previews_dir/tif.svg',
-        //     'text/plain' => 'previews_dir/txt.svg',
-        //     'application/x-msexcel' => 'previews_dir/xls.svg',
-        //     'text/xml' => 'previews_dir/xml.svg',
-        //     'multipart/x-zip' => 'previews_dir/zip.svg',
-        // ]);
-
         if ($this->isImage()) {
             $transformations = $this->transformations();
             $transformations['preview'] = ['120x120'];
@@ -250,3 +205,34 @@ trait FileTrait
         return chunk_split($str, 3, '/');
     }
 }
+
+
+// Define previews files paths
+// Config::set('booklet_uploader_previews_paths', [
+//     'default' => 'previews_dir/file.svg',
+//     'application/postscript' => 'previews_dir/ai.svg',
+//     'application/illustrator' => 'previews_dir/ai.svg',
+//     'video/x-msvideo' => 'previews_dir/avi.svg',
+//     'image/x-windows-bmp' => 'previews_dir/bmp.svg',
+//     'text/css' => 'previews_dir/css.svg',
+//     'application/msword' => 'previews_dir/doc.svg',
+//     'application/postscript' => 'previews_dir/eps.svg',
+//     'image/gif' => 'previews_dir/gif.svg',
+//     'text/html' => 'previews_dir/html.svg',
+//     'image/pjpeg' => 'previews_dir/jpg.svg',
+//     'text/ecmascript' => 'previews_dir/js.svg',
+//     'x-music/x-midi' => 'previews_dir/midi.svg',
+//     'video/quicktime' => 'previews_dir/mov.svg',
+//     'video/x-mpeg' => 'previews_dir/mp3.svg',
+//     'video/mpeg' => 'previews_dir/mpg.svg',
+//     'application/pdf' => 'previews_dir/pdf.svg',
+//     'image/png' => 'previews_dir/png.svg',
+//     'application/x-mspowerpoint' => 'previews_dir/ppt.svg',
+//     'application/postscript' => 'previews_dir/ps.svg',
+//     'application/octet-stream' => 'previews_dir/psd.svg',
+//     'image/x-tiff' => 'previews_dir/tif.svg',
+//     'text/plain' => 'previews_dir/txt.svg',
+//     'application/x-msexcel' => 'previews_dir/xls.svg',
+//     'text/xml' => 'previews_dir/xml.svg',
+//     'multipart/x-zip' => 'previews_dir/zip.svg',
+// ]);
