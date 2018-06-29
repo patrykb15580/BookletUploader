@@ -35,4 +35,9 @@ class ImageUtils
     {
         return intval($new_height * ($image_width / $image_height));
     }
+
+    public static function sig($hash, $modifiers = '')
+    {
+        return md5($hash . $modifiers);
+    }
 }
