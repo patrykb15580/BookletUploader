@@ -373,7 +373,7 @@ var BookletUploader = (function() {
                             file.file_info().done(function(response) {
                                 var file_info = response.data;
 
-                                $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').on('load', function() {
+                                $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').load(function() {
                                     file.element.find('.bu--file-preview').append(this);
                                 });
 
@@ -598,14 +598,7 @@ var BookletUploader = (function() {
                         _onEffectChange();
                     },
                     defaultModifiers: function() {
-                        console.log(editor.file.file_info);
-
-                        var aspect_ratio = false;
-                        if (editor.options.crop && editor.options.crop !== 'free') {
-                            aspect_ratio = editor.options.crop.replace(/[\\,:]/g, '/');
-                        }
-
-                        if (aspect_ratio) {
+                        if (editor.options.crop) {
                             var source_width = editor.file.file_info.image_info.original_width, width = source_width;
                             var source_height = editor.file.file_info.image_info.original_height, height = source_height;
 
@@ -613,14 +606,14 @@ var BookletUploader = (function() {
                             var y = 0;
 
                             var source_ratio = width / height;
-                            var target_ratio = eval(aspect_ratio);
+                            var target_ratio = editor.options.crop;
 
                             if (source_ratio !== target_ratio) {
                                 if (source_ratio > target_ratio) {
-                                    width = height * target_ratio;
+                                    width = height / target_ratio;
                                     x = (source_width - width) / 2;
                                 } else {
-                                    image_height = width / target_ratio;
+                                    height = width * target_ratio;
                                     y = (source_height - height) / 2;
                                 }
 
@@ -928,7 +921,7 @@ var BookletUploader = (function() {
             data.append('source', upload.file.file.source);
             data.append(0, upload.file.source, upload.file.file.name);
 
-            if (typeof upload.file.transformations.crop !== 'undefined' && upload.file.transformations.crop !== 'free') {
+            if (upload.file.transformations.crop && upload.file.transformations.crop !== 'free') {
                 data.append('transformations[crop]', upload.file.transformations.crop);
             }
 

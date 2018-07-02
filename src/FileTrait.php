@@ -142,29 +142,45 @@ trait FileTrait
         return false;
     }
 
-    public function transform($transformations = [])
+    public function transform(array $transformations = [])
     {
         $modifiers = [];
 
-        if (!$this->editable() || empty($transformations)) {
-            return '';
-        }
+        if ($this->editable()) {
+            foreach ($transformations as $transformation => $params) {
+                $modifier_parts = [$transformation];
 
-        foreach ($transformations as $effect => $params) {
-            if ($params == false) {
-                continue;
+                if (is_array($params) && !empty($params)) {
+                    $modifier_parts = array_merge($modifier_parts, $params);
+                }
+
+                $modifiers[] = join('/', $modifier_parts) . '/';
             }
 
-            $modifier = $effect . '/';
-
-            if (is_array($params) && !empty($params)) {
-                $modifier .= join('/', $params) . '/';
+            if (!empty($modifiers)) {
+                array_unshift($modifiers, '');
             }
-
-            $modifiers[] = $modifier;
         }
 
-        return (empty($modifiers)) ? '' : '-/' . join('-/', $modifiers);
+        return join('-/', $modifiers);
+    }
+
+    public function modifiersToTransformationsArray($modifiers = '')
+    {
+        $modifiers = ltrim($modifiers, '-/');
+
+        $transformations = [];
+        foreach (explode('-/', $modifiers) as $modifier) {
+            $modifier = rtrim($modifier, '/');
+            $modifier_parts = explode('/', $modifier);
+
+            $transformation = $modifier_parts[0];
+            $params = array_shift($modifier_parts);
+
+            $transformations[$transformation] = $params;
+        }
+
+        return $transformations;
     }
 
     public function transformUrl($transformations = [])

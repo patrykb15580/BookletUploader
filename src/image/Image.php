@@ -115,8 +115,8 @@ class Image
     }
 
     private function preview($params) {
-        $width = 600;
-        $height = 600;
+        $width = 0;
+        $height = 0;
         $quality = intval($params[1] ?? 75);
 
         if (isset($params[0])) {

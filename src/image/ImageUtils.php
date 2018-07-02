@@ -15,15 +15,15 @@ class ImageUtils
 
         if ($source_ratio !== $target_ratio) {
             if ($source_ratio > $target_ratio) {
-                $width = intval($height * $target_ratio);
+                $width = intval($height / $target_ratio);
                 $x = ($image_width - $width) / 2;
             } else {
-                $height = intval($width / $target_ratio);
+                $height = intval($width * $target_ratio);
                 $y = ($image_height - $height) / 2;
             }
         }
 
-        return [$width, $height, $x, $y];
+        return [$width . 'x' . $height, $x . ',' . $y];
     }
 
     public static function calculateProportionallyHeight($new_width, $image_width, $image_height)

@@ -75,8 +75,10 @@ class EditorImagick implements Editor
         $this->imagick->setImageCompressionQuality($quality);
     }
 
-    public function preview(int $width = 600, int $height = 600, int $quality = 75) {
-        $this->resize($width, $height);
+    public function preview(int $width = 0, int $height = 0, int $quality = 75) {
+        if ($width || $height) {
+            $this->imagick->scaleImage($width, $height, false);
+        }
         $this->format('jpeg');
         $this->quality($quality);
     }
