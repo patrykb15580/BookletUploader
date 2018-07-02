@@ -355,7 +355,7 @@ var BookletUploader = (function() {
                             type: file_data.type
                         });
 
-                        uploader.elements.files_list.prepend(file.element);
+                        uploader.elements.files_list.append(file.element);
 
                         if (!_isFileValid(file)) {
                             return false;
