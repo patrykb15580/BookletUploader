@@ -3,6 +3,12 @@ namespace Booklet\Uploader\Image;
 
 interface Editor
 {
+    public function width();
+    public function height();
+    public function aspectRatio();
+    public function imageFormat();
+    public function imageMIME();
+    public function imageInfo();
     public function resize(int $width, int $height);
     public function rotate(int $angle);
     public function crop(int $width, int $height, int $x, int $y);
@@ -15,5 +21,5 @@ interface Editor
     public function quality(int $quality);
     public function preview(int $width = 600, int $height = 600, int $quality = 75);
     public function thumbnail(int $size);
-    public function output($filename);
+    public function save($filename);
 }

@@ -4,6 +4,7 @@ namespace Booklet\Uploader;
 use Config;
 use PathHelper;
 use Booklet\Uploader\Image\Image as Image;
+use Booklet\Uploader\Image\ImageUtils as ImageUtils;
 
 trait FileTrait
 {
@@ -43,18 +44,27 @@ trait FileTrait
 
     public function imageInfo()
     {
-        if (!$this->isImage()) {
-            return null;
-        }
-
-        list($width, $height) = getimagesize($this->url());
         list($original_width, $original_height) = getimagesize($this->path());
 
+        $directory = Image::TRANSFORMED_FILES_DIR;
+        $sig = ImageUtils::sig($this->hash_id, $this->modifiers);
+
+        $file = glob($directory . $sig . '.*')[0] ?? null;
+
+        if (!$file) {
+            $image = new Image($this->hash_id, $this->path(), $this->modifiers);
+            $image->transform();
+
+            $file = glob($directory . $sig . '.*')[0];
+        }
+
+        list($width, $height) = getimagesize($file);
+
         return [
-            'width' => $width,
-            'height' => $height,
             'original_width' => $original_width,
-            'original_height' => $original_height
+            'original_height' => $original_height,
+            'width' => $width,
+            'height' => $height
         ];
     }
 
@@ -106,7 +116,28 @@ trait FileTrait
 
     public function transformations()
     {
-        return ($this->editable()) ? self::listTransformationsFromModifiers($this->modifiers) : [];
+        $transformations = [];
+
+        if ($this->editable()) {
+            $modifiers = ltrim($this->modifiers, '-/');
+            $modifiers = explode('-/', $modifiers);
+
+            foreach ($modifiers as $modifier) {
+                if (empty($modifier)) {
+                    continue;
+                }
+
+                $modifier = rtrim($modifier, '/');
+                $modifier_parts = explode('/', $modifier);
+
+                $transformation = $modifier_parts[0];
+                $params = array_shift($modifier_parts);
+
+                $transformations[$transformation] = $params;
+            }
+        }
+
+        return $transformations;
     }
 
     public static function listTransformationsFromModifiers($modifiers)
@@ -157,7 +188,7 @@ trait FileTrait
                 $modifiers[] = join('/', $modifier_parts) . '/';
             }
 
-            if (!empty($modifiers)) {
+            if (!empty($modifiers[0])) {
                 array_unshift($modifiers, '');
             }
         }

@@ -15,12 +15,12 @@ class EditorImagick implements Editor
         $this->input_path = $input_path;
     }
 
-    private function width()
+    public function width()
     {
         return $this->imagick->getImageWidth();
     }
 
-    private function height()
+    public function height()
     {
         return $this->imagick->getImageHeight();
     }
@@ -35,12 +35,33 @@ class EditorImagick implements Editor
         return $width / $this->aspectRatio();
     }
 
-    private function aspectRatio()
+    public function aspectRatio()
     {
         return $this->width() / $this->height();
     }
 
-    public function resize(int $width, int $height) {
+    public function imageFormat()
+    {
+        return strtolower($this->imagick->getImageFormat());
+    }
+
+    public function imageMIME()
+    {
+        return $this->imagick->getImageMimeType();
+    }
+
+    public function imageInfo()
+    {
+        return [
+            'width' => $this->width(),
+            'height' => $this->height(),
+            'format' => $this->imageFormat(),
+            'mime' => $this->imageMIME()
+        ];
+    }
+
+    public function resize(int $width, int $height)
+    {
         $bestfit = (!$width || !$height) ? true : false;
 
         $width = ($width) ? $width : $this->proportionalWidth($height);
@@ -49,35 +70,43 @@ class EditorImagick implements Editor
         $this->imagick->resizeImage($width, $height, \Imagick::FILTER_LANCZOS, 1, $bestfit);
     }
 
-    public function rotate(int $angle) {
+    public function rotate(int $angle)
+    {
         $this->imagick->rotateImage(self::BACKGROUND_COLOR, $angle);
     }
 
-    public function crop(int $width, int $height, int $x, int $y) {
+    public function crop(int $width, int $height, int $x, int $y)
+    {
         $this->imagick->cropImage($width, $height , $x , $y);
     }
 
-    public function mirror() {
+    public function mirror()
+    {
         $this->imagick->flopImage();
     }
 
-    public function flip() {
+    public function flip()
+    {
         $this->imagick->flipImage();
     }
 
-    public function rounded($radius = 30) {
+    public function rounded($radius = 30)
+    {
         $this->imagick->roundCorners($radius, $radius);
     }
 
-    public function negative() {
+    public function negative()
+    {
         $this->imagick->negateImage(false);
     }
 
-    public function grayscale() {
+    public function grayscale()
+    {
         $this->imagick->setImageColorspace(2);
     }
 
-    public function format($format) {
+    public function format($format)
+    {
         $this->imagick->setImageFormat($format);
     }
 
@@ -86,7 +115,8 @@ class EditorImagick implements Editor
         $this->imagick->setImageCompressionQuality($quality);
     }
 
-    public function preview(int $width = 0, int $height = 0, int $quality = 75) {
+    public function preview(int $width = 0, int $height = 0, int $quality = 75)
+    {
         $width = ($width) ? $width : $this->proportionalWidth($height);
         $height = ($height) ? $height : $this->proportionalHeight($width);
 
@@ -95,23 +125,19 @@ class EditorImagick implements Editor
         $this->quality($quality);
     }
 
-    public function thumbnail(int $size) {
+    public function thumbnail(int $size)
+    {
         $this->imagick->thumbnailImage($size, $size);
     }
 
-    public function output($filename)
+    public function save($filename)
     {
-        $dir = Image::TRANSFORMED_FILES_DIR;
-        $filename .= '.' . strtolower($this->imagick->getImageFormat());
-        $file_mime = $this->imagick->getImageMimeType();
+        $directory = Image::TRANSFORMED_FILES_DIR;
+        $extension = '.' . $this->imageFormat();
+        $mime = $this->imageMIME();
 
-        $output_path = $dir . $filename;
+        $file_path = $directory . $filename . $extension;
 
-        $this->imagick->writeImage($output_path);
-
-        header('Content-type: ' . $file_mime);
-        header('Content-Disposition: inline; filename=' . $filename . ';');
-
-        readfile($output_path);
+        $this->imagick->writeImage($file_path);
     }
 }
