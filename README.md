@@ -2,79 +2,68 @@
 
 ## Instalacja
 
-**Step 1:** Update `composer.json` with:
+**Composer**
 ```json
 "require": {
     "patrykb15580/booklet-uploader": "dev-master"
 }
 ```
-and run Composer:
 ```bash
 php composer install
 ```
-\
-**Step 2:** Include `uploader.js` file. This makes `BookletUploader` variable available.
+**Dodanie plików `uploader.js` oraz `styles.css`**\
+
 ```html
-<script src="/path/to/plugin/js/uploader.js" charset="utf-8"></script>
+<link rel="stylesheet" href="/path/to/plugin/directory/styles.css" />
+<script src="/path/to/plugin/directory/js/uploader.js" charset="utf-8"></script>
 ```
 
-**Optional:** if you want change language or add your own translation include language file before `uploader.js` file.
-```html
-<script src="/path/to/lang/file.js" charset="utf-8"></script>
-```
-\
-**Step 3:** Add uploader styles
-```html
-<link rel="stylesheet" href="/path/to/styles.css" />
-```
-\
-**Step 4:** Configure endpoint.
-
-## Upload
-
-Open uploader dialog using `openDialog` method on `BookletUploader` variable.
+**Własne tłumaczenie**\
+Aby dodać własne tłumaczenie należy utworzyć stałą `BOOKLET_UPLOADER_LOCALE` przed dołączeniem pliku `uploader.js`.
+Podane teksty zastąpią domyślne tłumaczenia.
 ```js
-var dialog = BookletUploader.openDialog(Object options);
+BOOKLET_UPLOADER_LOCALE = {
+    upload: 'Wyślij pliki',
+    ...
+}
 ```
-\
-Get info of each uploaded file
+## Uploader
 ```js
-dialog.done(function(files) {
-    $.each(files, function(i, file) {
+BookletUploader.openUploader({
+    multiple: true,
+    locale: 'pl',
+    max_files: 10,
+    crop: 16/9,
+    validations: {
+        type: 'image/jpeg, image/png'
+    }
+});
+
+uploader.done(function(files) { 
+    // Pętla po wybranych plikach
+    $.each(files, function(i, file) { 
         file.done(function(file_info) {
-            // Do something with file
+            // Zakończenie uploadu pliku
+        }).fail(function() {
+            // Błąd podczas przesyłania
         });
     });
 });
 ```
 
-## Dialog options
+## Edytor zdjęć
+```js
+var editor = BookletUploader.openEditor(image_hash, {
+    locale: 'pl',
+    crop: 16/9,
+    effects: ['crop', 'rotate', 'mirror', 'flip', 'grayscale', 'negative']
+});
 
-**endpoint** `string`  
-Endpoint url `required`
-
-**locale** `string`  
-Set uploader language. Default `en`
-
-**store_to** `string`  
-Location for stored files. One of `locale` or `ftp`. Default `locale`
-
-**multiple** `boolean`  
-Allow pick multiple files. Default `true`
-
-**max_files** `int`  
-Limit of selected files number. Default `null`
-
-**template_file** `string`  
-Path to uploader template. Default `''`
-
-## File validations  
-
-**validations.type** `string`  
-Set allowed file mime types. Default `''`
-
-**validations.max_size** `int`  
-Set maximum size of each file. Default `null`
-
-**validations.min_size** `int`  
-Set minimum size of each file. Default `null`
+editor.done(function(file) {
+    file.done(function(file_data) {
+        // Aktualizacja danych pliku
+    }).fail(function() {
+        // Błąd podczas aktualizacji pliku
+    });
+});
+```
