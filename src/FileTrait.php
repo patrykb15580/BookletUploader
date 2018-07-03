@@ -47,7 +47,7 @@ trait FileTrait
         list($original_width, $original_height) = getimagesize($this->path());
 
         $directory = Image::TRANSFORMED_FILES_DIR;
-        $sig = ImageUtils::sig($this->hash_id, $this->modifiers);
+        $sig = $this->sig($this->modifiers);
 
         $file = glob($directory . $sig . '.*')[0] ?? null;
 
@@ -95,9 +95,9 @@ trait FileTrait
         return ($this->deleted_at) ? true : false;
     }
 
-    public function transformedFileSignture($modifiers = '')
+    public function sig($modifiers = '')
     {
-        return md5($this->hash_id . $modifiers);
+        return ImageUtils::sig($this->hash_id, $modifiers);
     }
 
     public function preview()
@@ -128,31 +128,11 @@ trait FileTrait
                 }
 
                 $modifier = rtrim($modifier, '/');
-                $modifier_parts = explode('/', $modifier);
-
-                $transformation = $modifier_parts[0];
-                $params = array_shift($modifier_parts);
+                $params = explode('/', $modifier);
+                $transformation = array_shift($params);
 
                 $transformations[$transformation] = $params;
             }
-        }
-
-        return $transformations;
-    }
-
-    public static function listTransformationsFromModifiers($modifiers)
-    {
-        $modifiers = ltrim($modifiers, '-/');
-
-        $transformations = [];
-        foreach (explode('-/', $modifiers) as $modifier) {
-            $modifier = rtrim($modifier, '/');
-            $params = explode('/', $modifier);
-
-            $name = $params[0];
-            unset($params[0]);
-
-            $transformations[$name] = (empty($params)) ? true : array_values($params);
         }
 
         return $transformations;
@@ -194,24 +174,6 @@ trait FileTrait
         }
 
         return join('-/', $modifiers);
-    }
-
-    public function modifiersToTransformationsArray($modifiers = '')
-    {
-        $modifiers = ltrim($modifiers, '-/');
-
-        $transformations = [];
-        foreach (explode('-/', $modifiers) as $modifier) {
-            $modifier = rtrim($modifier, '/');
-            $modifier_parts = explode('/', $modifier);
-
-            $transformation = $modifier_parts[0];
-            $params = array_shift($modifier_parts);
-
-            $transformations[$transformation] = $params;
-        }
-
-        return $transformations;
     }
 
     public function transformUrl($transformations = [])
