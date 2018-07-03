@@ -25,6 +25,16 @@ class EditorImagick implements Editor
         return $this->imagick->getImageHeight();
     }
 
+    public function proportionalWidth($height)
+    {
+        return $height * $this->aspectRatio();
+    }
+
+    public function proportionalHeight($width)
+    {
+        return $width / $this->aspectRatio();
+    }
+
     private function aspectRatio()
     {
         return $this->width() / $this->height();
@@ -32,8 +42,9 @@ class EditorImagick implements Editor
 
     public function resize(int $width, int $height) {
         $bestfit = (!$width || !$height) ? true : false;
-        $width = ($width) ? $width : $height;
-        $height = ($height) ? $height : $width;
+
+        $width = ($width) ? $width : $this->proportionalWidth($height);
+        $height = ($height) ? $height : $this->proportionalHeight($width);
 
         $this->imagick->resizeImage($width, $height, \Imagick::FILTER_LANCZOS, 1, $bestfit);
     }
@@ -76,9 +87,10 @@ class EditorImagick implements Editor
     }
 
     public function preview(int $width = 0, int $height = 0, int $quality = 75) {
-        if ($width || $height) {
-            $this->imagick->scaleImage($width, $height, false);
-        }
+        $width = ($width) ? $width : $this->proportionalWidth($height);
+        $height = ($height) ? $height : $this->proportionalHeight($width);
+
+        $this->imagick->scaleImage($width, $height, true);
         $this->format('jpeg');
         $this->quality($quality);
     }
