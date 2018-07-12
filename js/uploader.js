@@ -16,12 +16,8 @@ var BookletUploaderTemplate = (function() {
                 </div>\
             </div>\
         </div>',
-        uploader: '<div class="bu--choose-files-section">\
-            <input id="bu--files-picker" class="bu--files-picker" type="file" />\
-            <div class="bu--drop-area">\
-                <i class="upload-icon fas fa-cloud-upload-alt"></i>\
-                {{drop_area}}\
-            </div>\
+        uploader: '<input id="bu--files-picker" class="bu--files-picker" type="file" />\
+        <div class="bu--uploader-header">\
             <label class="bu--button bu--button-primary bu--select-files" for="bu--files-picker">\
                 {{files_picker}}\
             </label>\
@@ -31,9 +27,7 @@ var BookletUploaderTemplate = (function() {
                 </div>\
             {{/max_size_info}}\
         </div>\
-        <div class="bu--selected-files-section">\
-            <ul class="bu--files-list"></ul>\
-        </div>\
+        <ul class="bu--files-list"></ul>\
         <div class="bu--files-counter">\
             {{files_counter}}\
         </div>',
@@ -103,6 +97,9 @@ var BookletUploader = (function() {
         store_to: 'local',
         multiple: true,
         max_files: null,
+        drag_and_drop: false,
+        images_only: false,
+        max_size: null,
         validations: {
             type: null,
             max_size: null,
@@ -113,6 +110,7 @@ var BookletUploader = (function() {
 
     var _panel = null;
 
+    var image_file_types = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/gif', 'image/tiff', 'image/bmp'];
     var helpers = {
         uid: function() {
             var hex_chr = '0123456789abcdef';
@@ -160,6 +158,15 @@ var BookletUploader = (function() {
 
             return false;
         },
+        inArray: function(needle, haystack) {
+            for (var i = 0; i < haystack.length; i++) {
+                if (needle == haystack[i]) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
         setTextVariables: function(text, params = {}) {
             for (var param in params) {
                 text = text.replace('%' + param + '%', params[param]);
@@ -180,13 +187,11 @@ var BookletUploader = (function() {
                 upload: 'Upload',
                 save: 'Save',
                 reject: 'Cancel',
-                drop_area: 'Drag and drop file here',
                 max_size_info: 'Max size of uploaded file is %max_size%',
                 files_counter: 'Uploaded %files_number% files',
                 from: 'of %number%',
                 from_files: 'of %files_number% files',
                 multiple: {
-                    drop_area: 'Drag and drop files here',
                     files_picker: 'Choose files',
                 },
                 effects: {
@@ -219,13 +224,11 @@ var BookletUploader = (function() {
                 upload: 'Wyślij',
                 save: 'Zapisz',
                 reject: 'Anuluj',
-                drop_area: 'Przeciągnij i upuść plik tutaj',
                 max_size_info: 'Maksymalny rozmiar pliku wynosi %max_size%',
                 files_counter: 'Przesłano %files_number% plików',
                 from: ' z %number%',
                 from_files: ' z %files_number% plików',
                 multiple: {
-                    drop_area: 'Przeciągnij i upuść pliki tutaj',
                     files_picker: 'Wybierz pliki',
                 },
                 effects: {
@@ -272,6 +275,8 @@ var BookletUploader = (function() {
 
         var options = $.extend(defaults, options);
 
+        console.log(options);
+
         var panel = $.extend($.Deferred(), {
             element: BookletUploaderTemplate.getElement('panel'),
             options: options,
@@ -302,20 +307,18 @@ var BookletUploader = (function() {
                         header: uploader.locale.header.uploader,
                         reject: uploader.locale.reject,
                         done: uploader.locale.upload,
-                        drop_area: uploader.locale.drop_area,
                         files_picker: uploader.locale.files_picker,
                         max_size_info: null,
                         files_counter: helpers.setTextVariables(uploader.locale.files_counter, { files_number: _numberOfUploadedOrQueued() })
                     }
 
                     if (uploader.options.multiple) {
-                        data.drop_area = uploader.locale.multiple.drop_area,
                         data.files_picker = uploader.locale.multiple.files_picker;
                     }
 
-                    if (uploader.options.validations.max_size) {
+                    if (uploader.options.max_size) {
                         data.max_size_info = helpers.setTextVariables(uploader.locale.max_size_info, {
-                            max_size: helpers.sizeToSizeString(uploader.options.validations.max_size)
+                            max_size: helpers.sizeToSizeString(uploader.options.max_size)
                         });
                     }
 
@@ -336,7 +339,7 @@ var BookletUploader = (function() {
                     uploader.elements.files_counter.html(text);
 
                     if (_isMaxFilesNumberLimitExceeded()) {
-                        uploader.elements.files_counter.css({ color: '#d80e24' });
+                        uploader.elements.files_counter.css({ color: '#53be31' });
                     } else {
                         uploader.elements.files_counter.removeAttr('style');
                     }
@@ -355,11 +358,15 @@ var BookletUploader = (function() {
                             type: file_data.type
                         });
 
-                        uploader.elements.files_list.append(file.element);
-
-                        if (!_isFileValid(file)) {
+                        if (uploader.options.images_only && !helpers.inArray(file.type, image_files_types)) {
                             return false;
                         }
+
+                        if (uploader.options.max_size && file.size > uploader.options.max_size) {
+                            return false;
+                        }
+
+                        uploader.elements.files_list.append(file.element);
 
                         result[file.hash] = file;
                         _updateFilesCounter();
@@ -368,7 +375,7 @@ var BookletUploader = (function() {
 
                         file.upload = new Upload(file, file_data, { crop: uploader.options.crop }).done(function(file_info) {
                             file.is_stored = true;
-                            file.element.addClass('uploaded');
+                            file.element.addClass('uploaded').find('.bu--file-preview').append('<div class="bu--loader sm"></div>');
 
                             file.file_info().done(function(response) {
                                 var file_info = response.data;
@@ -380,6 +387,8 @@ var BookletUploader = (function() {
                                 file.resolve(file_info);
                             }).fail(function(xhr) {
                                 file.reject();
+                            }).always(function() {
+                                file.element.find('.bu--file-preview .bu--loader').remove();
                             });
                         }).fail(function() {
                             delete result[file.hash];
@@ -418,7 +427,6 @@ var BookletUploader = (function() {
                         files_list: uploader.element.find('.bu--files-list'),
                         files_picker: uploader.element.find('#bu--files-picker'),
                         files_counter: uploader.element.find('.bu--files-counter'),
-                        drop_area: uploader.element.find('.bu--drop-area'),
                         done: uploader.element.find('.bu--panel-done'),
                         cancel: uploader.element.find('.bu--panel-close'),
                     }
@@ -441,32 +449,30 @@ var BookletUploader = (function() {
                         }
                     });
 
-                    uploader.elements.drop_area.on({
-                        dragover: function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            if (!_isMaxFilesNumberLimitExceeded()) {
-                                $(this).addClass('active');
-                            }
-                        },
-                        dragleave: function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            $(this).removeClass('active');
-                        },
-                        drop: function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            $(this).removeClass('active');
-
-                            if (!_isMaxFilesNumberLimitExceeded()) {
-                                _onFilesSelect(e.originalEvent.dataTransfer.files);
-                            }
-                        }
+                    uploader.element.on('dragover dragleave drop', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
                     });
+
+                    if (uploader.options.drag_and_drop) {
+                        uploader.element.on({
+                            dragover: function(e) {
+                                if (!_isMaxFilesNumberLimitExceeded()) {
+                                    uploader.elements.files_list.addClass('bu--dragin');
+                                }
+                            },
+                            dragleave: function(e) {
+                                uploader.elements.files_list.removeClass('bu--dragin');
+                            },
+                            drop: function(e) {
+                                uploader.elements.files_list.removeClass('bu--dragin');
+
+                                if (!_isMaxFilesNumberLimitExceeded()) {
+                                    _onFilesSelect(e.originalEvent.dataTransfer.files);
+                                }
+                            }
+                        });
+                    }
 
                     uploader.elements.files_list.on('click', '.bu--file .bu--file-action-button.file-action-remove', function() {
                         var file_elem = $(this).closest('.bu--file');
