@@ -275,8 +275,6 @@ var BookletUploader = (function() {
 
         var options = $.extend(defaults, options);
 
-        console.log(options);
-
         var panel = $.extend($.Deferred(), {
             element: BookletUploaderTemplate.getElement('panel'),
             options: options,
@@ -292,15 +290,36 @@ var BookletUploader = (function() {
             openUploader: function() {
                 var uploader = panel;
 
-                var result = {};
+                var selected_files = {};
+                var uploaded_files = {};
 
-                var _numberOfUploadedOrQueued = function() {
-                    return Object.keys(result).length;
-                };
+                var _selectedFilesNumber = function() {
+                    return Object.keys(selected_files).length;
+                }
 
-                var _isMaxFilesNumberLimitExceeded = function() {
-                    return (uploader.options.max_files == null || _numberOfUploadedOrQueued() < uploader.options.max_files) ? false : true;
-                };
+                var _uploadedFilesNumber = function() {
+                    return Object.keys(uploaded_files).length;
+                }
+
+                var _isMaxFilesNumberSelected = function() {
+                    var files_number_limit = uploader.options.max_files;
+
+                    if (files_number_limit && files_number_limit <= _selectedFilesNumber()) {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                var _isMaxFilesNumberUploaded = function() {
+                    var files_number_limit = uploader.options.max_files;
+
+                    if (files_number_limit && files_number_limit <= _uploadedFilesNumber()) {
+                        return true;
+                    }
+
+                    return false;
+                }
 
                 var _templateData = function() {
                     var data = {
@@ -309,7 +328,7 @@ var BookletUploader = (function() {
                         done: uploader.locale.upload,
                         files_picker: uploader.locale.files_picker,
                         max_size_info: null,
-                        files_counter: helpers.setTextVariables(uploader.locale.files_counter, { files_number: _numberOfUploadedOrQueued() })
+                        files_counter: helpers.setTextVariables(uploader.locale.files_counter, { files_number: _selectedFilesNumber() })
                     }
 
                     if (uploader.options.multiple) {
@@ -329,94 +348,16 @@ var BookletUploader = (function() {
                     return data;
                 };
 
-                var _updateFilesCounter = function() {
-                    var text = helpers.setTextVariables(uploader.locale.files_counter, { files_number: _numberOfUploadedOrQueued() });
-
-                    if (uploader.options.max_files) {
-                        text += helpers.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
-                    }
-
-                    uploader.elements.files_counter.html(text);
-
-                    if (_isMaxFilesNumberLimitExceeded()) {
-                        uploader.elements.files_counter.css({ color: '#53be31' });
-                    } else {
-                        uploader.elements.files_counter.removeAttr('style');
-                    }
-                };
-
-                var _onFilesSelect = function(files) {
-                    $.each(files, function(i, file_data) {
-                        if (_isMaxFilesNumberLimitExceeded()) {
-                            return false;
-                        }
-
-                        var file = new File({
-                            name: file_data.name,
-                            hash: helpers.uid(),
-                            size: file_data.size,
-                            type: file_data.type
-                        });
-
-                        if (uploader.options.images_only && !helpers.inArray(file.type, image_files_types)) {
-                            return false;
-                        }
-
-                        if (uploader.options.max_size && file.size > uploader.options.max_size) {
-                            return false;
-                        }
-
-                        uploader.elements.files_list.append(file.element);
-
-                        result[file.hash] = file;
-                        _updateFilesCounter();
-
-                        file.element.find('.bu--progressbar').show();
-
-                        file.upload = new Upload(file, file_data, { crop: uploader.options.crop }).done(function(file_info) {
-                            file.is_stored = true;
-                            file.element.addClass('uploaded').find('.bu--file-preview').append('<div class="bu--loader sm"></div>');
-
-                            file.file_info().done(function(response) {
-                                var file_info = response.data;
-
-                                $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').load(function() {
-                                    file.element.find('.bu--file-preview').append(this);
-                                });
-
-                                file.resolve(file_info);
-                            }).fail(function(xhr) {
-                                file.reject();
-                            }).always(function() {
-                                file.element.find('.bu--file-preview .bu--loader').remove();
-                            });
-                        }).fail(function() {
-                            delete result[file.hash];
-
-                            file.reject().error(panel.locale.errors.upload.default);
-
-                            _updateFilesCounter();
-                        }).always(function() {
-                            delete file.upload;
-
-                            file.element.find('.bu--progressbar').hide();
-                        }).progress(function(progress) {
-                            file.element.find('.bu--progress').css({ 'width': progress + '%' });
-                        });
-
-                        file.upload.start();
-                    });
-                };
-
                 var _renderUploader = function() {
-                    uploader.element.addClass('bu--uploader').css({ height: window.innerHeight });
-
                     var uploader_content = BookletUploaderTemplate.getHTML('uploader');
+
+                    uploader.element.addClass('bu--uploader').css({ height: window.innerHeight });
                     uploader.element.find('.bu--panel-content').append(uploader_content);
-                    uploader.element.find('#bu--files-picker').attr({
-                        multiple: uploader.options.multiple,
-                        accept: uploader.options.validations.type
-                    }).hide();
+                    uploader.element.find('#bu--files-picker').attr('multiple', uploader.options.multiple).hide();
+
+                    if (uploader.options.images_only) {
+                        uploader.element.find('#bu--files-picker').attr('accept', image_file_types.join(','));
+                    }
 
                     var html = uploader.element[0].outerHTML;
                     uploader.element = BookletUploaderTemplate.render(html, _templateData());
@@ -438,8 +379,8 @@ var BookletUploader = (function() {
                     });
 
                     uploader.elements.files_picker.on({
-                        click: function() {
-                            if (_isMaxFilesNumberLimitExceeded()) {
+                        click: function(e) {
+                            if (_isMaxFilesNumberSelected()) {
                                 e.preventDefault();
                                 e.stopPropagation();
                             }
@@ -457,7 +398,7 @@ var BookletUploader = (function() {
                     if (uploader.options.drag_and_drop) {
                         uploader.element.on({
                             dragover: function(e) {
-                                if (!_isMaxFilesNumberLimitExceeded()) {
+                                if (!_isMaxFilesNumberSelected()) {
                                     uploader.elements.files_list.addClass('bu--dragin');
                                 }
                             },
@@ -467,7 +408,7 @@ var BookletUploader = (function() {
                             drop: function(e) {
                                 uploader.elements.files_list.removeClass('bu--dragin');
 
-                                if (!_isMaxFilesNumberLimitExceeded()) {
+                                if (!_isMaxFilesNumberSelected()) {
                                     _onFilesSelect(e.originalEvent.dataTransfer.files);
                                 }
                             }
@@ -478,16 +419,22 @@ var BookletUploader = (function() {
                         var file_elem = $(this).closest('.bu--file');
                         var hash = file_elem.data('hash');
 
-                        if (hash in result) {
-                            result[hash].delete();
+                        if (hash in selected_files) {
+                            selected_files[hash].delete();
 
-                            delete result[hash];
+                            delete selected_files[hash];
+                            delete uploaded_files[hash];
+
                             _updateFilesCounter();
                         }
                     });
 
                     uploader.element.on('click', '.bu--panel-done', function() {
-                        panel.resolve(Object.values(result));
+                        panel.resolve(Object.values(uploaded_files));
+                    });
+
+                    uploader.fail(function() {
+                        $.each(selected_files, function(i, file) { file.reject(); });
                     });
 
                     uploader.element.on('click', '.bu--panel-close', function() {
@@ -497,67 +444,97 @@ var BookletUploader = (function() {
                     uploader.always(function() {
                         panel.close();
                     });
+                };
 
-                    uploader.fail(function() {
-                        $.each(result, function(i, file) { file.abort(); });
+                var _updateFilesCounter = function() {
+                    var text = helpers.setTextVariables(uploader.locale.files_counter, { files_number: _uploadedFilesNumber() });
+
+                    if (uploader.options.max_files) {
+                        text += helpers.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
+                    }
+
+                    uploader.elements.files_counter.html(text);
+
+                    if (_isMaxFilesNumberUploaded()) {
+                        uploader.elements.files_counter.css({ color: '#53be31' });
+                    } else {
+                        uploader.elements.files_counter.removeAttr('style');
+                    }
+                };
+
+                var _onFilesSelect = function(files) {
+                    uploader.elements.done.removeClass('bu--panel-done bu--button-primary').addClass('bu--button-disabled');
+
+                    var uploads = [];
+
+                    $.each(files, function(i, file_data) {
+                        if (_isMaxFilesNumberSelected()) {
+                            return false; // return false == break
+                        }
+
+                        var file = new File({
+                            name: file_data.name,
+                            hash: helpers.uid(),
+                            size: file_data.size,
+                            type: file_data.type
+                        });
+
+                        if (uploader.options.images_only && !helpers.inArray(file.type, image_file_types)) {
+                            return true; // return true == continue;
+                        }
+
+                        if (uploader.options.max_size && file.size > uploader.options.max_size) {
+                            return true; // return true == continue;
+                        }
+
+                        uploader.elements.files_list.append(file.element);
+                        file.element.find('.bu--progressbar').show();
+
+                        var upload = new Upload(file, file_data, { crop: uploader.options.crop });
+
+                        uploads.push(upload);
+                        file.upload = upload;
+                        selected_files[file.hash] = file;
+
+                        upload.done(function() {
+                            file.is_stored = true;
+                            file.element.addClass('uploaded').find('.bu--file-preview').append('<div class="bu--loader sm"></div>');
+
+                            uploaded_files[file.hash] = file;
+
+                            file.file_info().done(function(response) {
+                                var file_info = response.data;
+
+                                $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').load(function() {
+                                    file.element.find('.bu--file-preview').append(this);
+                                });
+
+                                file.resolve(file_info);
+                            }).fail(function(xhr) {
+                                file.reject();
+                            }).always(function() {
+                                file.element.find('.bu--file-preview .bu--loader').remove();
+                            });
+
+                            _updateFilesCounter();
+                        }).fail(function() {
+                            delete selected_files[file.hash];
+
+                            file.reject().error(panel.locale.errors.upload.default);
+                        }).always(function() {
+                            delete file.upload;
+
+                            file.element.find('.bu--progressbar').hide();
+                        }).progress(function(progress) {
+                            file.element.find('.bu--progress').css({ 'width': progress + '%' });
+                        });
+
+                        file.upload.start();
                     });
-                };
 
-                var _validators = {
-                    type: function(file) {
-                        if (uploader.options.validations.type == '' || uploader.options.validations.type == null) { return true; }
-
-                        var allowed_types = uploader.options.validations.type.replace(' ', '').split(',');
-
-                        for (var i = 0; i < allowed_types.length; i++) {
-                            var type_parts = allowed_types[i].split('/');
-
-                            if (file.type == allowed_types[i]) {
-                                return true;
-                            }
-
-                            if (file.type.split('/')[0] == type_parts[0] && type_parts[1] == '*') {
-                                return true;
-                            }
-                        }
-
-                        file.error.call(file, locale.errors.file.invalid_type);
-
-                        return false;
-                    },
-                    maxSize: function(file) {
-                        if (uploader.options.validations.max_size !== null && file.size > uploader.options.validations.max_size) {
-                            file.error.call(file, uploader.locale.errors.file.max_size);
-
-                            return false;
-                        }
-
-                        return true;
-                    },
-                    minSize: function(file) {
-                        if (uploader.options.validations.min_size !== null && file.size < uploader.options.validations.min_size) {
-                            file.error.call(file, uploader.locale.errors.file.min_size);
-
-                            return false;
-                        }
-
-                        return true;
-                    }
-                };
-                var _isFileValid = function(file) {
-                    if ('type' in uploader.options.validations && !_validators.type(file)) {
-                        return false;
-                    }
-
-                    if ('max_size' in uploader.options.validations && !_validators.maxSize(file)) {
-                        return false;
-                    }
-
-                    if ('min_size' in uploader.options.validations && !_validators.minSize(file)) {
-                        return false;
-                    }
-
-                    return true;
+                    $.when.apply($, uploads).always(function() {
+                        uploader.elements.done.removeClass('bu--button-disabled').addClass('bu--panel-done bu--button-primary');
+                    });
                 };
 
                 _renderUploader();
@@ -1009,16 +986,25 @@ var BookletUploader = (function() {
                 dataType: 'json'
             });
         };
-        file.delete = function() {
+        file.abort = function functionName() {
             if (file.hasOwnProperty('upload') && file.upload) {
                 file.upload.abort();
             }
-
-            file.element.fadeOut(300, function() { $(this).remove(); });
+        };
+        file.delete = function() {
+            file.reject().element.fadeOut(300, function() { $(this).remove(); });
         };
         file.error = function(message) {
             file.element.find('.bu--file-details .bu--upload-error').html(message);
         };
+
+        file.fail(function() {
+            if (file.hasOwnProperty('upload') && file.upload) {
+                delete file.upload;
+
+                file.upload.abort();
+            }
+        });
 
         return $.extend(file, file_data).renderElement();
     }
