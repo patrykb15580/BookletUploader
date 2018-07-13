@@ -421,13 +421,15 @@ var BookletUploader = (function() {
                         var hash = file_elem.data('hash');
 
                         if (hash in selected_files) {
-                            selected_files[hash].delete();
+                            selected_files[hash].reject();
 
                             delete selected_files[hash];
                             delete uploaded_files[hash];
 
                             _updateFilesCounter();
                         }
+
+                        file_elem.fadeOut(300, function() { $(this).remove(); });
                     });
 
                     uploader.element.on('click', '.bu--panel-done', function() {
