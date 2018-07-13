@@ -4,7 +4,7 @@
         {
             "type": "package",
             "package": {
-                "name": "boooklet/framework",
+                "name": "patrykb15580/booklet-uploader",
                 "version": "dev-master",
                 "type": "package",
                 "source": {
@@ -15,9 +15,7 @@
             }
         }
     ],
-    "require": {
-        "smottt/wideimage": "1.1.3"
-    },
+    "require": {},
     "autoload": {
         "classmap": [
             "src", "src/image"
