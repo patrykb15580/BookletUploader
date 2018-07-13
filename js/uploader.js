@@ -111,7 +111,7 @@ var BookletUploader = (function() {
 
     var _panel = null;
 
-    var image_file_types = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/gif', 'image/tiff', 'image/bmp'];
+    var image_file_types = ['image/jpeg', 'image/png', 'image/gif', 'image/tiff', 'image/bmp'];
     var helpers = {
         uid: function() {
             var hex_chr = '0123456789abcdef';
