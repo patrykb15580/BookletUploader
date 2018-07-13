@@ -34,9 +34,8 @@ BookletUploader.openUploader({
     locale: 'pl',
     max_files: 10,
     crop: 16/9,
-    validations: {
-        type: 'image/jpeg, image/png'
-    }
+    images_only: true,
+    max_size: 1024 * 1024 * 10
 });
 
 uploader.done(function(files) { 
