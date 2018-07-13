@@ -40,6 +40,7 @@ var BookletUploaderTemplate = (function() {
                     <div class="bu--progressbar">\
                         <div class="bu--progress"></div>\
                     </div>\
+                    <div class="bu--file-upload-error"></div>\
                 </div>\
             </div>\
             <ul class="bu--file-actions">\
@@ -465,8 +466,6 @@ var BookletUploader = (function() {
                 var _onFilesSelect = function(files) {
                     uploader.elements.done.removeClass('bu--panel-done bu--button-primary').addClass('bu--button-disabled');
 
-                    var uploads = [];
-
                     $.each(files, function(i, file_data) {
                         if (_isMaxFilesNumberSelected()) {
                             return false; // return false == break
@@ -480,19 +479,26 @@ var BookletUploader = (function() {
                         });
 
                         if (uploader.options.images_only && !helpers.inArray(file.type, image_file_types)) {
-                            return true; // return true == continue;
+                            return true; // return true == continue
                         }
 
                         if (uploader.options.max_size && file.size > uploader.options.max_size) {
-                            return true; // return true == continue;
+                            return true; // return true == continue
                         }
+
+                        file.done(function() {
+                            uploaded_files[file.hash] = file;
+
+                            _updateFilesCounter();
+                        }).always(function() {
+                            file.element.find('.bu--progressbar').hide();
+                        });
 
                         uploader.elements.files_list.append(file.element);
                         file.element.find('.bu--progressbar').show();
 
                         var upload = new Upload(file, file_data, { crop: uploader.options.crop });
 
-                        uploads.push(upload);
                         file.upload = upload;
                         selected_files[file.hash] = file;
 
@@ -500,31 +506,26 @@ var BookletUploader = (function() {
                             file.is_stored = true;
                             file.element.addClass('uploaded').find('.bu--file-preview').append('<div class="bu--loader sm"></div>');
 
-                            uploaded_files[file.hash] = file;
-
                             file.file_info().done(function(response) {
                                 var file_info = response.data;
+                                var preview = $('<img src="' + file_info.preview + '" alt="" />');
 
-                                $('<img src="' + file_info.preview + '" alt="' + file_info.name + '" />').load(function() {
-                                    file.element.find('.bu--file-preview').append(this);
+                                file.element.find('.bu--file-preview').append(preview);
+
+                                preview.on('load error', function() {
+                                    file.element.find('.bu--file-preview .bu--loader').remove();
                                 });
 
                                 file.resolve(file_info);
                             }).fail(function(xhr) {
-                                file.reject();
-                            }).always(function() {
-                                file.element.find('.bu--file-preview .bu--loader').remove();
+                                file.reject().element.find('.bu--file-preview .bu--loader').remove();
                             });
-
-                            _updateFilesCounter();
                         }).fail(function() {
                             delete selected_files[file.hash];
 
                             file.reject().error(panel.locale.errors.upload.default);
                         }).always(function() {
                             delete file.upload;
-
-                            file.element.find('.bu--progressbar').hide();
                         }).progress(function(progress) {
                             file.element.find('.bu--progress').css({ 'width': progress + '%' });
                         });
@@ -532,8 +533,12 @@ var BookletUploader = (function() {
                         file.upload.start();
                     });
 
-                    $.when.apply($, uploads).always(function() {
-                        uploader.elements.done.removeClass('bu--button-disabled').addClass('bu--panel-done bu--button-primary');
+                    $.when.apply($, Object.values(selected_files)).always(function() {
+
+                        // Double check in case select files before always callback called
+                        $.when.apply($, Object.values(selected_files)).always(function() {
+                            uploader.elements.done.removeClass('bu--button-disabled').addClass('bu--panel-done bu--button-primary');
+                        });
                     });
                 };
 
@@ -995,14 +1000,14 @@ var BookletUploader = (function() {
             file.reject().element.fadeOut(300, function() { $(this).remove(); });
         };
         file.error = function(message) {
-            file.element.find('.bu--file-details .bu--upload-error').html(message);
+            file.element.find('.bu--file-details .bu--file-upload-error').html(message);
         };
 
         file.fail(function() {
             if (file.hasOwnProperty('upload') && file.upload) {
-                delete file.upload;
-
                 file.upload.abort();
+
+                delete file.upload;
             }
         });
 
