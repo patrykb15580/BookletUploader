@@ -519,7 +519,7 @@ var BookletUploader = (function() {
 
                             file.file_info().done(function(response) {
                                 var file_info = response.data;
-                                var preview = $('<img src="' + file_info.preview + '" alt="" />');
+                                var preview = $('<img class="bu--preview-image" src="' + file_info.preview + '" alt="" />');
 
                                 file.element.find('.bu--file-preview').append(preview);
 
@@ -684,7 +684,7 @@ var BookletUploader = (function() {
                         var operation = $.Deferred();
 
                         var cropper = $.Deferred();
-                        cropper.element = $('<img src="' + editor.file.file_info.original_url + '" alt="" />');
+                        cropper.element = $('<img class="bu--preview-image" src="' + editor.file.file_info.original_url + '" alt="" />');
                         cropper.cropper = new Cropper(cropper.element[0], {
                             aspectRatio: editor.options.crop,
                             autoCropArea: 1,
@@ -869,7 +869,7 @@ var BookletUploader = (function() {
                     // Refresh preview
                     editor.elements.preview.empty().append('<div class="bu--loader lg">');
 
-                    var preview_image = $('<img src="' + transformations.toUrl() + '" alt="" />').on({
+                    var preview_image = $('<img class="bu--preview-image" src="' + transformations.toUrl() + '" alt="" />').on({
                         load: function() {
                             editor.elements.preview.empty().append(preview_image);
                         },
@@ -896,7 +896,7 @@ var BookletUploader = (function() {
                         file_info: file_info
                     });
 
-                    editor.elements.preview.find('img').attr({ src: editor.file.file_info.url });
+                    editor.elements.preview.find('.bu--preview-image').attr({ src: editor.file.file_info.url });
                     transformations.setDefault();
 
                     editor.elements.effects_menu.find('.bu--editor-effect-button').each(function(i, button) {
