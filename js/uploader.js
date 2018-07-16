@@ -49,22 +49,12 @@ var BookletUploaderTemplate = (function() {
                 </li>\
             </ul>\
         </li>',
-        editor: '<div class="bu--editor-sidebar">\
-            <ul class="bu--editor-menu"></ul>\
+        editor: '<div class="bu--editor-preview">\
+            <div class="bu--loader lg"></div>\
         </div>\
-        <div class="bu--editor-content">\
-            <div class="bu--editor-preview">\
-                <img src="" alt="" />\
-            </div>\
-            <div class="bu--image-cropper">\
-                <div class="bu--cropper-preview">\
-                    <img src="" alt="" />\
-                </div>\
-            </div>\
-        </div>',
-        effect_button: '<li class="bu--editor-menu-item action-{{action}}" data-action="{{action}}">\
-            <i class="bu--icon icon-{{action}} sm"></i>\
-            {{label}}\
+        <ul class="bu--editor-effects"></ul>',
+        effect_button: '<li class="bu--editor-effect-button bu--editor-effect-{{effect}}" title="{{label}}" data-effect="{{effect}}">\
+            <i class="bu--icon icon-{{effect}} sm"></i>\
         </li>'
     };
 
@@ -88,10 +78,17 @@ var BookletUploaderTemplate = (function() {
 })();
 
 var BookletUploader = (function() {
-    var plugin_directory_parts = document.currentScript.src.split('/');
-    plugin_directory_parts.splice(0, 3);
-    plugin_directory_parts.splice(-2, 2);
-    var plugin_directory = '/' + plugin_directory_parts.join('/') + '/';
+    // Add clean method to array prototype
+    Array.prototype.clean = function(value = '') {
+        for (var i = 0; i < this.length; i++) {
+            if (this[i] == value) {
+                this.splice(i, 1);
+                i--;
+            }
+        }
+
+        return this;
+    };
 
     var defaults = {
         locale: 'en',
@@ -101,11 +98,6 @@ var BookletUploader = (function() {
         drag_and_drop: false,
         images_only: false,
         max_size: null,
-        validations: {
-            type: null,
-            max_size: null,
-            min_size: null,
-        },
         crop: null,
     };
 
@@ -136,7 +128,7 @@ var BookletUploader = (function() {
 
             return Math.round(size * 10) / 10 + ' ' + units[unit_index];
         },
-        isVarEmpty: function(variable) {
+        isEmpty: function(variable) {
             // Check if object/array is empty
             if (typeof variable == 'object') {
                 for (var key in variable) {
@@ -175,6 +167,21 @@ var BookletUploader = (function() {
 
             return text;
         },
+        clearArray: function(array, value = '') {
+            if (typeof array == array) {
+                var new_array = [];
+
+                for (var i = 0; i < array.length; i++) {
+                    if (array[i] !== value) {
+                        new_array.push(array[i]);
+                    }
+                }
+
+                array = new_array;
+            }
+
+            return array;
+        }
     };
     var locale = function(locale = 'en') {
         var locales = {
@@ -205,6 +212,7 @@ var BookletUploader = (function() {
                 },
                 errors: {
                     file: {
+                        load: 'Load file error',
                         invalid_type: 'Invalid file type',
                         max_size: 'Max file size limit exceeded',
                         min_size: 'Min file size limit exceeded'
@@ -242,6 +250,7 @@ var BookletUploader = (function() {
                 },
                 errors: {
                     file: {
+                        load: 'Błąd ładowania pliku',
                         invalid_type: 'Nieprawidłowy format pliku',
                         max_size: 'Zbyt duży rozmiar pliku',
                         min_size: 'Zbyt mały rozmiar pliku'
@@ -568,232 +577,232 @@ var BookletUploader = (function() {
                 var editor = panel;
                 editor.options = $.extend({ effects: ['crop', 'rotate', 'mirror', 'flip', 'grayscale', 'negative'] }, editor.options);
 
-                var editor_elements = {};
-
-                _cropper = null;
-                var modifiers = {
-                    modifiers_order: ['crop', 'resize', 'rotate', 'flip', 'mirror', 'grayscale', 'negative'],
-                    applied: {},
-                    apply: function(effect, params = []) {
-                        this.applied[effect] = params;
-
-                        _onEffectChange();
+                var transformations = {
+                    order: ['crop', 'resize', 'rotate', 'flip', 'mirror', 'grayscale', 'negative'],
+                    applied: {
+                        crop: false,
+                        resize: false,
+                        rotate: false,
+                        flip: false,
+                        mirror: false,
+                        grayscale: false,
+                        negative: false
                     },
-                    isApplied: function(modifier) {
-                        return this.applied.hasOwnProperty(modifier);
-                    },
-                    remove: function(modifier) {
-                        delete this.applied[modifier];
+                    apply: function(transformation, params, callback = null) {
+                        if (this.applied.hasOwnProperty(transformation)) {
+                            this.applied[transformation] = params;
+                        }
 
-                        _onEffectChange();
+                        if (callback && typeof callback == 'function') {
+                            callback.call();
+                        }
                     },
-                    defaultModifiers: function() {
+                    remove: function(transformation, callback = null) {
+                        if (this.applied.hasOwnProperty(transformation)) {
+                            this.apply(transformation, false);
+                        }
+
+                        if (callback && typeof callback == 'function') {
+                            callback.call();
+                        }
+                    },
+                    get: function(transformation) {
+                        return this.applied[transformation];
+                    },
+                    isActive: function(transformation) {
+                        return (this.get(transformation)) ? true : false;
+                    },
+                    setDefault: function() {
+                        // Set default transformations
                         if (editor.options.crop) {
                             var source_width = editor.file.file_info.image_info.original_width, width = source_width;
                             var source_height = editor.file.file_info.image_info.original_height, height = source_height;
 
-                            var x = 0;
-                            var y = 0;
+                            var x = 0, y = 0;
 
-                            var source_ratio = width / height;
-                            var target_ratio = editor.options.crop;
+                            var source_ratio = width / height, target_ratio = editor.options.crop;
 
                             if (source_ratio !== target_ratio) {
                                 if (source_ratio > target_ratio) {
-                                    width = height / target_ratio;
-                                    x = (source_width - width) / 2;
+                                    width = height / target_ratio, x = (source_width - width) / 2;
                                 } else {
-                                    height = width * target_ratio;
-                                    y = (source_height - height) / 2;
+                                    height = width * target_ratio, y = (source_height - height) / 2;
                                 }
 
-                                this.apply('crop', [ width + 'x' + height, x + ',' + y ]);
+                                transformations.apply('crop', [ width + 'x' + height, x + ',' + y ]);
                             }
+                        }
+
+                        // Set image transformation, override defaults is necessary
+                        var modifiers = editor.file.file_info.modifiers.split('-/').clean();
+
+                        for (var i = 0; i < modifiers.length; i++) {
+                            var modifier = modifiers[i];
+                            var params = modifier.split('/').clean();
+                            var transformation = params.shift();
+
+                            if (params.length == 0) {
+                                params = true;
+                            }
+
+                            this.apply(transformation, params);
                         }
                     },
                     toString: function() {
-                        var m = [];
+                        var modifiers = [];
 
-                        for (var i = 0; i < this.modifiers_order.length; i++) {
-                            var effect = this.modifiers_order[i];
+                        for (var i = 0; i < this.order.length; i++) {
+                            var transformation = this.order[i];
 
-                            if (!this.applied.hasOwnProperty(effect) || !this.applied[effect]) {
-                                continue;
+                            if (this.applied[transformation]) {
+                                var params = this.applied[transformation];
+                                var modifier = transformation + '/';
+
+                                if (Array.isArray(params) && params.length > 0) {
+                                    modifier += params.join('/') + '/';
+                                }
+
+                                modifiers.push(modifier);
                             }
-
-                            var params = this.applied[effect];
-                            var modifier = effect + '/';
-
-                            if (Array.isArray(params) && params.length > 0) {
-                                modifier += params.join('/') + '/';
-                            }
-
-                            m.push(modifier);
                         }
 
-                        var string = m.join('-/');
+                        modifiers = modifiers.join('-/');
 
-                        if (string !== '') {
-                            string = '-/' + string;
+                        if (modifiers !== '') {
+                            modifiers = '-/' + modifiers;
                         }
 
-                        return string;
+                        return modifiers;
                     },
                     toUrl: function() {
                         return editor.file.file_info.original_url + this.toString();
                     },
-                    methods: {
-                        crop: function() {
-                            _cropper = new CropTool().open();
-                            _cropper.done(function(data) {
-                                var dimensions = data.width + 'x' + data.height;
-                                var position = data.x + ',' + data.y;
-
-                                modifiers.apply('crop', [ dimensions, position ]);
-                            }).always(function() {
-                                _cropper = null;
-                            });
-                        },
-                        rotate: function() {
-                            var current_angle = (modifiers.isApplied('rotate')) ? modifiers.applied.rotate[0] : 0;
-                            var new_angle = current_angle + 90;
-                            if (new_angle >= 360) {
-                                new_angle = new_angle - (new_angle * (new_angle / 360));
-                            }
-
-                            if (new_angle == 0) {
-                                modifiers.remove('rotate');
-                            } else {
-                                modifiers.apply('rotate', [new_angle]);
-                            }
-                        },
-                        flip: function() {
-                            if (modifiers.isApplied('flip')) {
-                                modifiers.remove('flip');
-                            } else {
-                                modifiers.apply('flip', []);
-                            }
-                        },
-                        mirror: function() {
-                            if (modifiers.isApplied('mirror')) {
-                                modifiers.remove('mirror');
-                            } else {
-                                modifiers.apply('mirror', []);
-                            }
-                        },
-                        grayscale: function() {
-                            if (modifiers.isApplied('grayscale')) {
-                                modifiers.remove('grayscale');
-                            } else {
-                                modifiers.apply('grayscale', []);
-                            }
-                        },
-                        negative: function() {
-                            if (modifiers.isApplied('negative')) {
-                                modifiers.remove('negative');
-                            } else {
-                                modifiers.apply('negative', []);
-                            }
-                        },
-                    }
                 }
 
-                var _templateData = function() {
-                    return {
-                        header: editor.locale.header.editor,
-                        done: editor.locale.save,
-                        reject: editor.locale.reject,
-                    };
-                };
+                var operations = {
+                    crop: function() {
+                        var operation = $.Deferred();
 
-                var _refreshPreview = function() {
-                    var img = editor.elements.preview.find('img');
-                    img.fadeOut(200, function() {
-                        $(this).attr({ src: modifiers.toUrl() }).load(function() {
-                            $(this).fadeIn(200);
+                        var cropper = $.Deferred();
+                        cropper.element = $('<img src="' + editor.file.file_info.original_url + '" alt="" />');
+                        cropper.cropper = new Cropper(cropper.element[0], {
+                            aspectRatio: editor.options.crop,
+                            autoCropArea: 1,
+                            dragMode: 'move',
+                            restore: false,
+                            viewMode: 1,
+                            movable: false,
+                            rotatable: false,
+                            scalable: false,
+                            zoomable: false,
+                            zoomOnTouch: false,
+                            zoomOnWheel: false,
+                            toggleDragModeOnDblclick: false,
+                            responsive: true,
+                            ready: function() {
+                                editor.elements.preview.find('.bu--loader').remove();
+                            }
                         });
-                    });
-                }
+                        cropper.data = function() {
+                            return cropper.cropper.getData();
+                        };
+                        cropper.open = function() {
+                            editor.elements.preview.empty();
+                            editor.elements.preview.removeClass('bu--editor-preview').addClass('bu--cropper-preview').append(cropper.element);
+                            editor.elements.preview.append('<div class="bu--loader lg"></div>');
+                            editor.elements.effects_menu.hide();
 
-                var _onEffectChange = function() {
-                    _refreshPreview();
+                            editor.elements.done.removeClass('bu--panel-done').addClass('bu--cropper-done');
+                            editor.elements.cancel.removeClass('bu--panel-close').addClass('bu--cropper-cancel');
+                        };
+                        cropper.close = function() {
+                            cropper.cropper.destroy();
+
+                            editor.elements.preview.removeClass('bu--cropper-preview').addClass('bu--editor-preview');
+                            editor.elements.effects_menu.show();
+
+                            editor.elements.done.removeClass('bu--cropper-done').addClass('bu--panel-done');
+                            editor.elements.cancel.removeClass('bu--cropper-cancel').addClass('bu--panel-close');
+
+                            _refreshEditor();
+                        };
+
+                        cropper.done(function(data) {
+                            var dimensions = parseInt(data.width) + 'x' + parseInt(data.height);
+                            var position = parseInt(data.x) + ',' + parseInt(data.y);
+
+                            transformations.apply('crop', [ dimensions, position ]);
+
+                            operation.resolve();
+                        }).fail(function() {
+                            operation.reject();
+                        }).always(function() {
+                            cropper.close();
+                        }).open();
+
+                        editor.element.on('click', '.bu--cropper-done', function() {
+                            cropper.resolve(cropper.data());
+                        });
+
+                        editor.element.on('click', '.bu--cropper-cancel', function() {
+                            cropper.reject();
+                        });
+
+                        return operation;
+                    },
+                    rotate: function() {
+                        var current_angle = transformations.get('rotate')[0] || 0;
+                        var new_angle = current_angle + 90;
+
+                        if (new_angle > 0 && new_angle < 360) {
+                            transformations.apply('rotate', [new_angle], _refreshEditor);
+                        } else {
+                            transformations.remove('rotate', _refreshEditor);
+                        }
+
+                        return $.Deferred().resolve();
+                    },
+                    flip: function() {
+                        transformations.apply('flip', !transformations.isActive('flip'), _refreshEditor);
+
+                        return $.Deferred().resolve();
+                    },
+                    mirror: function() {
+                        transformations.apply('mirror', !transformations.isActive('mirror'), _refreshEditor);
+
+                        return $.Deferred().resolve();
+                    },
+                    grayscale: function() {
+                        transformations.apply('grayscale', !transformations.isActive('grayscale'), _refreshEditor);
+
+                        return $.Deferred().resolve();
+                    },
+                    negative: function() {
+                        transformations.apply('negative', !transformations.isActive('negative'), _refreshEditor);
+
+                        return $.Deferred().resolve();
+                    }
                 };
-
-                var CropTool = function() {
-                    var aspect_ratio = String(editor.options.crop).replace(/[\\,:]/g, '/');
-                    aspect_ratio = (aspect_ratio == 'free') ? null : eval(aspect_ratio);
-
-                    var cropper = $.Deferred();
-                    cropper.element = editor.elements.cropper.find('.bu--cropper-preview img');
-                    cropper.cropper = new Cropper(cropper.element[0], {
-                        aspectRatio: aspect_ratio,
-                        autoCropArea: 1,
-                        dragMode: 'move',
-                        restore: false,
-                        viewMode: 1,
-                        movable: false,
-                        rotatable: false,
-                        scalable: false,
-                        zoomable: false,
-                        zoomOnTouch: false,
-                        zoomOnWheel: false,
-                        toggleDragModeOnDblclick: false,
-                        responsive: true,
-                    });
-                    cropper.getData = function() {
-                        return cropper.cropper.getData(true);
-                    };
-                    cropper.open = function() {
-                        editor.element.find('.bu--editor-menu-item.action-crop').addClass('active');
-                        editor.element.find('.bu--panel-done').removeClass('bu--panel-done').addClass('bu--cropper-done');
-                        editor.element.find('.bu--panel-close').removeClass('bu--panel-close').addClass('bu--cropper-cancel');
-
-                        editor.elements.preview.hide();
-                        editor.elements.cropper.show();
-
-                        return cropper;
-                    };
-                    cropper.close = function() {
-                        cropper.cropper.destroy();
-
-                        editor.element.find('.bu--editor-menu-item.action-crop').removeClass('active');
-                        editor.element.find('.bu--cropper-done').removeClass('bu--cropper-done').addClass('bu--panel-done');
-                        editor.element.find('.bu--cropper-cancel').removeClass('bu--cropper-cancel').addClass('bu--panel-close');
-
-                        editor.elements.preview.show();
-                        editor.elements.cropper.hide();
-                    };
-                    cropper.always(function() {
-                        cropper.close();
-                    });
-
-                    editor.element.on('click', '.bu--cropper-done', function() {
-                        cropper.resolve(cropper.getData());
-                    });
-
-                    editor.element.on('click', '.bu--cropper-cancel', function() {
-                        cropper.reject();
-                    });
-
-                    return cropper;
-                }
 
                 var _renderEditor = function() {
                     editor.element.addClass('bu--editor').css({ height: window.innerHeight });
 
                     var editor_content = BookletUploaderTemplate.getHTML('editor');
                     editor.element.find('.bu--panel-content').append(editor_content);
-                    editor.element.find('.bu--image-cropper').hide();
 
                     var html = editor.element[0].outerHTML;
-                    editor.element = BookletUploaderTemplate.render(html, _templateData());
+                    editor.element = BookletUploaderTemplate.render(html, {
+                        header: editor.locale.header.editor,
+                        done: editor.locale.save,
+                        reject: editor.locale.reject,
+                    });
 
                     editor.render();
 
                     editor.elements = {
-                        menu: editor.element.find('.bu--editor-menu'),
+                        content: editor.element.find('.bu--panel-content'),
                         preview: editor.element.find('.bu--editor-preview'),
-                        cropper: editor.element.find('.bu--image-cropper'),
+                        effects_menu: editor.element.find('.bu--editor-effects'),
                         done: editor.element.find('.bu--panel-done'),
                         cancel: editor.element.find('.bu--panel-close'),
                     }
@@ -803,12 +812,12 @@ var BookletUploader = (function() {
 
                         var button_html = BookletUploaderTemplate.getHTML('effect_button');
                         var data = {
-                            action: effect,
+                            effect: effect,
                             label: editor.locale.effects[effect]
                         };
                         var button = BookletUploaderTemplate.render(button_html, data);
 
-                        editor.elements.menu.append(button);
+                        editor.elements.effects_menu.append(button);
                     }
                 }
 
@@ -817,18 +826,26 @@ var BookletUploader = (function() {
                         editor.element.css({ height: window.innerHeight });
                     });
 
-                    editor.elements.menu.on('click', '.bu--editor-menu-item', function() {
-                        if (!_cropper) {
-                            var action = $(this).data('action');
-                            var operation = modifiers.methods[action];
+                    editor.elements.effects_menu.on('click', '.bu--editor-effect-button', function() {
+                        var button = $(this);
+                        var transformation = button.data('effect');
 
-                            operation.call();
+                        if (operations.hasOwnProperty(transformation)) {
+                            var operation = operations[transformation].call();
+
+                            operation.always(function() {
+                                if (transformations.isActive(transformation)) {
+                                    button.addClass('bu--editor-button-active');
+                                } else {
+                                    button.removeClass('bu--editor-button-active');
+                                }
+                            });
                         }
                     });
 
                     editor.element.on('click', '.bu--panel-done', function() {
                         var result = $.Deferred();
-                        var data = { file: { modifiers: modifiers.toString() } };
+                        var data = { file: { modifiers: transformations.toString() } };
 
                         $.post('/file/' + editor.file.hash, data, function(response) {
                             result.resolve(response.data);
@@ -836,56 +853,66 @@ var BookletUploader = (function() {
                             result.reject();
                         });
 
-                        panel.resolve(result.promise());
+                        editor.resolve(result.promise());
                     });
 
                     editor.element.on('click', '.bu--panel-close', function() {
-                        panel.reject();
+                        editor.reject();
                     });
 
                     editor.always(function() {
-                        panel.close();
+                        editor.close();
                     });
                 }
 
+                var _refreshEditor = function() {
+                    // Refresh preview
+                    editor.elements.preview.empty().append('<div class="bu--loader lg">');
+
+                    var preview_image = $('<img src="' + transformations.toUrl() + '" alt="" />').on({
+                        load: function() {
+                            editor.elements.preview.empty().append(preview_image);
+                        },
+                        error: function() {
+                            editor.elements.done.removeClass('bu--panel-done bu--button-primary').addClass('bu--button-disabled');
+                            editor.elements.content.empty().append('<div class="bu--editor-file-error">' + editor.locale.errors.file.load + '</div>');
+                        }
+                    });
+                }
 
                 _renderEditor();
                 _bindEvents();
 
-                var options = editor.options;
-                var locale = editor.locale;
-                var element = editor.element;
-                var elements = editor.elements;
-                var render = editor.render;
-                var close = editor.close;
-
-                editor = editor.promise();
-                editor.options = options;
-                editor.locale = locale;
-                editor.element = element;
-                editor.elements = elements;
-                editor.render = render;
-                editor.close = close;
-                editor.file = new File({ hash: file_hash }).file_info();
-
-                editor.file.done(function(response) {
+                editor.file = new File({ hash: file_hash });
+                editor.file.file_info().done(function(response) {
                     var file_info = response.data;
 
-                    editor.file.name = file_info.name;
-                    editor.file.hash = file_info.hash;
-                    editor.file.size = file_info.size;
-                    editor.file.type = file_info.type;
-                    editor.file.is_stored = true;
-                    editor.file.file_info = file_info;
+                    editor.file = $.extend(editor.file, {
+                        name: file_info.name,
+                        hash: file_info.hash,
+                        size: file_info.size,
+                        type: file_info.type,
+                        is_stored: true,
+                        file_info: file_info
+                    });
 
                     editor.elements.preview.find('img').attr({ src: editor.file.file_info.url });
-                    editor.elements.cropper.find('img').attr({ src: editor.file.file_info.original_url });
+                    transformations.setDefault();
 
-                    modifiers.defaultModifiers();
-                    _refreshPreview();
+                    editor.elements.effects_menu.find('.bu--editor-effect-button').each(function(i, button) {
+                        var transformation = $(button).data('effect');
+
+                        if (transformations.isActive(transformation)) {
+                            $(button).addClass('bu--editor-button-active');
+                        } else {
+                            $(button).removeClass('bu--editor-button-active');
+                        }
+                    });
+
+                    _refreshEditor();
                 }).fail(function() {
-                    editor.element.find('.bu--panel-content').empty().append('<div class="file-load-error">Błąd ładowania pliku</div>');
-                    editor.element.find('.bu--panel-done').remove();
+                    editor.elements.content.empty().append('<div class="bu--editor-file-error">' + editor.locale.errors.file.load + '</div>');
+                    editor.elements.done.removeClass('bu--panel-done bu--button-primary').addClass('bu--button-disabled');
                 });
 
                 return editor;

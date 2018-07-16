@@ -128,10 +128,9 @@ trait FileTrait
                 }
 
                 $modifier = rtrim($modifier, '/');
-                $modifier_parts = explode('/', $modifier);
 
-                $transformation = $modifier_parts[0];
-                $params = array_shift($modifier_parts);
+                $params = explode('/', $modifier);
+                $transformation = array_shift($params);
 
                 $transformations[$transformation] = $params;
             }
