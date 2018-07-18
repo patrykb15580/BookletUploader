@@ -22,9 +22,6 @@
     font-family: 'OpenSans';
 }
 
-#bu--dialog * {
-    box-sizing: border-box;
-}
 
 #bu--dialog .bu--panel {
     display: flex;
@@ -57,12 +54,13 @@
     overflow: hidden;
 }
 
-#bu--dialog .bu--panel .bu--panel-content {
+#bu--dialog .bu--panel .bu--panel-body {
     display: flex;
     position: relative;
     width: 100%;
     flex: 1 1 calc(100% - 150px);
     flex-direction: column;
+    margin: 0px;
     padding: 10px 0px;
     overflow: hidden;
 }
@@ -93,7 +91,8 @@
 #bu--dialog .bu--panel .bu--panel-footer .bu--footer-nav .bu--footer-nav--left,
 #bu--dialog .bu--panel .bu--panel-footer .bu--footer-nav .bu--footer-nav--right {
     display: block;
-    flex: 1 1 50%;
+    flex: 1 1 auto;
+    max-width: 50%;
     padding: 0px 15px;
 }
 
@@ -172,7 +171,7 @@
     border: none;
 }
 
-#bu--dialog .bu--panel .bu--panel-content > .bu--loader {
+#bu--dialog .bu--panel .bu--panel-body > .bu--loader {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -206,15 +205,11 @@
  *     Uploader
  */
 
-#bu--dialog.bu--uploader .bu--panel-content {
-    display: flex;
-    height: 100%;
-    flex-direction: column;
-    margin: 0px;
-    overflow: hidden;
+#bu--dialog.bu--uploader .bu--panel-body {
+
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--uploader-header {
+#bu--dialog.bu--uploader .bu--panel-body .bu--uploader-header {
     display: flex;
     flex: 0 0 81px;
     flex-direction: column;
@@ -222,13 +217,13 @@
     align-items: center;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--select-files {
+#bu--dialog.bu--uploader .bu--panel-body .bu--select-files {
     max-width: 320px;
     padding: 10px 0px;
     margin: 0px;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--max-file-size-info {
+#bu--dialog.bu--uploader .bu--panel-body .bu--max-file-size-info {
     font-family: 'OpenSans Bold';
     font-size: 14px;
     text-align: center;
@@ -237,7 +232,7 @@
     margin: 8px 0px;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list {
     display: block;
     position: relative;
     width: 100%;
@@ -250,13 +245,13 @@
     -webkit-overflow-scrolling: touch;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list.bu--dragin {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list.bu--dragin {
     background-color: #f1f1f1;
     padding: 0px;
     border: 2px dashed #157cfc;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file {
     display: flex;
     background-color: transparent;
     width: 100%;
@@ -271,20 +266,20 @@
     transition: background-color 0.2s;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file:hover {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file:hover {
     background-color: #f9f7f8;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list.bu--dragin .bu--file,
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list.bu--dragin .bu--file:hover {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list.bu--dragin .bu--file,
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list.bu--dragin .bu--file:hover {
     background-color: transparent;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file:last-child {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file:last-child {
     border-bottom: none;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-preview {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-preview {
     display: flex;
     background-color: #e9e7e8;
     position: relative;
@@ -300,24 +295,24 @@
     transition: background-color 0.2s;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file.uploaded .bu--file-preview {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file.uploaded .bu--file-preview {
     background-color: transparent;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-preview .bu--preview-image {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-preview img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file.uploaded .bu--file-preview .bu--loader {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file.uploaded .bu--file-preview .bu--loader {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-details {
     display: flex;
     flex: 1 1 auto;
     flex-wrap: wrap;
@@ -326,7 +321,7 @@
     overflow: hidden;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-name {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-details .bu--file-name {
     max-width: calc(100% - 54px);
     flex: 0 0 calc(100% - 54px);
     font-family: 'OpenSans Bold';
@@ -336,7 +331,7 @@
     overflow: hidden;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-size {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-details .bu--file-size {
     display: flex;
     max-width: 54px;
     flex: 0 0 54px;
@@ -348,11 +343,11 @@
     color: #a3a1a2;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress {
     flex: 0 0 100%;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--progressbar {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--progressbar {
     display: none;
     background-color: #e9e7e8;
     width: 100%;
@@ -363,7 +358,7 @@
     overflow: hidden;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--progressbar .bu--progress {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--progressbar .bu--progress {
     display: block;
     background-color: #d80e24;
     width: 0%;
@@ -373,7 +368,7 @@
     transition: 0.2s;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-actions {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-actions {
     display: flex;
     flex-direction: row-reverse;
     list-style-type: none;
@@ -381,23 +376,23 @@
     padding: 0px 10px;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-actions .bu--file-action-button {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-actions .bu--file-action-button {
     font-size: 26px;
     color: #a3a1a2;
     cursor: pointer;
     transition: color 0.2s;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-actions .bu--file-action-button:hover {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-actions .bu--file-action-button:hover {
     color: #848484;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--file-upload-error {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-list .bu--file .bu--file-details .bu--file-upload-progress .bu--file-upload-error {
     font-size: 12px;
     color: #d80e24;
 }
 
-#bu--dialog.bu--uploader .bu--panel-content .bu--files-counter {
+#bu--dialog.bu--uploader .bu--panel-body .bu--files-counter {
     display: block;
     width: 100%;
     height: 34px;
@@ -434,20 +429,14 @@
  *    Editor
  */
 
-#bu--dialog.bu--editor .bu--panel-content {
-    display: flex;
-    position: relative;
-    width: 100%;
+#bu--dialog.bu--editor .bu--panel-body {
     height: 100%;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    margin: 0px;
     padding: 0px;
-    overflow: hidden;
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-file-error {
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-file-error {
     position: absolute;
     top: 50%;
     width: 100%;
@@ -457,8 +446,121 @@
     transform: translateY(-50%);
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-preview,
-#bu--dialog.bu--editor .bu--panel-content .bu--cropper-preview {
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper {
+    display: none;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--editor-content .bu--editor-preview,
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper .bu--cropper-holder {
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: calc(100% - 60px);
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper .bu--cropper-holder {
+    height: calc(100% - 80px);
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--editor-content .bu--editor-preview img,
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper .bu--cropper-holder img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--editor-content .bu--editor-preview .bu--loader,
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper .bu--cropper-holder .bu--loader {
+
+}
+
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content .bu--panel-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 60px;
+    list-style-type: none;
+    margin: 0px;
+    padding: 10px 0px;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper .bu--panel-menu {
+    align-items: flex-end;
+    height: 80px;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content .bu--panel-menu .bu--menu-item {
+    display: inline-flex;
+    position: relative;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-width: 60px;
+    padding: 0px 15px;
+    opacity: 1;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content .bu--panel-menu .bu--menu-item:hover {
+    opacity: 0.7;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content .bu--panel-menu .bu--menu-item.bu--item-current {
+    font-family: 'OpenSans Bold';
+    color: #157cfc;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content .bu--panel-menu .bu--menu-item.bu--item-current .bu--crop-size {
+    max-width: 30px;
+    max-height: 30px;
+    border-color: #157cfc;
+}
+
+#bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper .bu--panel-menu .bu--menu-item::after {
+    display: block;
+    content: attr(data-aspect-ratio);
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+#bu--dialog.bu--editor .bu--crop-size {
+    border: 2px solid #333333;
+    transition: border 0.2s;
+}
+
+
+
+
+/* Cropper */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*#bu--dialog.bu--editor .bu--panel-body .bu--editor-preview,
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-cropper {
     display: flex;
     position: relative;
     width: 100%;
@@ -469,8 +571,8 @@
     padding: 10px 0px;
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-preview .bu--loader,
-#bu--dialog.bu--editor .bu--panel-content .bu--cropper-preview .bu--loader {
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-preview .bu--loader,
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-cropper .bu--loader {
     display: block;
     position: absolute;
     top: 50%;
@@ -478,14 +580,14 @@
     transform: translate(-50%, -50%);
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-preview .bu--preview-image,
-#bu--dialog.bu--editor .bu--panel-content .bu--cropper-preview .bu--preview-image {
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-preview img,
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-cropper img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-effects {
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-effects {
     display: flex;
     width: 100%;
     height: 50px;
@@ -498,7 +600,7 @@
     border-top: 1px solid #e3e1e2;
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-effects .bu--editor-effect-button {
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-effects .bu--editor-effect-button {
     display: inline-flex;
     max-width: 80px;
     flex: 1 1 auto;
@@ -511,14 +613,15 @@
     transition: opacity 0.2s;
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-effects .bu--editor-effect-button.bu--editor-button-active {
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-effects .bu--editor-effect-button.bu--editor-button-active {
     padding-bottom: 3px;
     border-bottom: 3px solid #d80e24;
 }
 
-#bu--dialog.bu--editor .bu--panel-content .bu--editor-effects .bu--editor-effect-button:hover {
+#bu--dialog.bu--editor .bu--panel-body .bu--editor-effects .bu--editor-effect-button:hover {
     opacity: 0.6;
-}
+}*/
+
 
 @media only screen and (min-width: 576px) {
 

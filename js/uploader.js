@@ -3,7 +3,7 @@ var BookletUploaderTemplate = (function() {
         panel: '<div id="bu--dialog">\
             <div class="bu--panel">\
                 <div class="bu--panel-header">{{header}}</div>\
-                <div class="bu--panel-content"></div>\
+                <div class="bu--panel-body"></div>\
                 <div class="bu--panel-footer">\
                     <ul class="bu--footer-nav">\
                         <li class="bu--footer-nav--left">\
@@ -49,12 +49,23 @@ var BookletUploaderTemplate = (function() {
                 </li>\
             </ul>\
         </li>',
-        editor: '<div class="bu--editor-preview">\
-            <div class="bu--loader lg"></div>\
+        editor: '<div class="bu--panel-content bu--editor-content">\
+            <div class="bu--editor-preview">\
+                <div class="bu--loader lg"></div>\
+            </div>\
+            <div class="bu--panel-menu bu--editor-menu"></div>\
         </div>\
-        <ul class="bu--editor-effects"></ul>',
-        effect_button: '<li class="bu--editor-effect-button bu--editor-effect-{{effect}}" title="{{label}}" data-effect="{{effect}}">\
+        <div class="bu--panel-content bu--cropper">\
+            <div class="bu--cropper-holder">\
+                <img src="http://kreator.fotobum.test/file/1081d4c4e56a1a1ac36914ec84e8d5d6/" alt="" />\
+            </div>\
+            <div class="bu--panel-menu bu--cropper-menu"></div>\
+        </div>',
+        editor_effect_button: '<li class="bu--menu-item bu--effect-button bu--effect-{{effect}}" title="{{label}}" data-effect="{{effect}}">\
             <i class="bu--icon icon-{{effect}} sm"></i>\
+        </li>',
+        cropper_crop_size_button: '<li class="bu--menu-item" data-aspect-ratio="{{aspect_ratio}}">\
+            <div class="bu--crop-size"></div>\
         </li>'
     };
 
@@ -104,7 +115,7 @@ var BookletUploader = (function() {
     var _panel = null;
 
     var image_file_types = ['image/jpeg', 'image/png', 'image/gif', 'image/tiff', 'image/bmp'];
-    var helpers = {
+    var utils = {
         uid: function() {
             var hex_chr = '0123456789abcdef';
             var uid = '';
@@ -181,6 +192,37 @@ var BookletUploader = (function() {
             }
 
             return array;
+        },
+        isAspectRatioString: function(string) {
+            return new RegExp(/\d\/\d/gi).test(string);
+        },
+        stringToAspectRatio: function(string) {
+            var aspect_ratio = string.replace(/ /g, '').split(',').clean()[0];
+            if (this.isAspectRatioString(aspect_ratio)) {
+                var parts = aspect_ratio.split('/');
+
+                return parts[0] / parts[1];
+            }
+
+            return null;
+        },
+        listAspectRatiosFromString: function(string) {
+            var parts = string.replace(/ /g, '').split(',').clean();
+            var aspect_ratios = [];
+
+            for (var i = 0; i < parts.length; i++) {
+                var str = parts[i];
+
+                if (str == 'free' || this.isAspectRatioString(str)) {
+                    aspect_ratios.push(str);
+                }
+            }
+
+            if (aspect_ratios.length == 0) {
+                aspect_ratios.push('free');
+            }
+
+            return aspect_ratios;
         }
     };
     var locale = function(locale = 'en') {
@@ -194,6 +236,7 @@ var BookletUploader = (function() {
                 done: 'Done',
                 upload: 'Upload',
                 save: 'Save',
+                apply: 'Apply',
                 reject: 'Cancel',
                 max_size_info: 'Max size of uploaded file is %max_size%',
                 files_counter: 'Uploaded %files_number% files',
@@ -232,6 +275,7 @@ var BookletUploader = (function() {
                 done: 'Zakończ',
                 upload: 'Wyślij',
                 save: 'Zapisz',
+                apply: 'Zatwierdź',
                 reject: 'Anuluj',
                 max_size_info: 'Maksymalny rozmiar pliku wynosi %max_size%',
                 files_counter: 'Przesłano %files_number% plików',
@@ -338,7 +382,7 @@ var BookletUploader = (function() {
                         done: uploader.locale.upload,
                         files_picker: uploader.locale.files_picker,
                         max_size_info: null,
-                        files_counter: helpers.setTextVariables(uploader.locale.files_counter, { files_number: _selectedFilesNumber() })
+                        files_counter: utils.setTextVariables(uploader.locale.files_counter, { files_number: _selectedFilesNumber() })
                     }
 
                     if (uploader.options.multiple) {
@@ -346,13 +390,13 @@ var BookletUploader = (function() {
                     }
 
                     if (uploader.options.max_size) {
-                        data.max_size_info = helpers.setTextVariables(uploader.locale.max_size_info, {
-                            max_size: helpers.sizeToSizeString(uploader.options.max_size)
+                        data.max_size_info = utils.setTextVariables(uploader.locale.max_size_info, {
+                            max_size: utils.sizeToSizeString(uploader.options.max_size)
                         });
                     }
 
                     if (uploader.options.max_files) {
-                        data.files_counter += helpers.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
+                        data.files_counter += utils.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
                     }
 
                     return data;
@@ -362,7 +406,7 @@ var BookletUploader = (function() {
                     var uploader_content = BookletUploaderTemplate.getHTML('uploader');
 
                     uploader.element.addClass('bu--uploader').css({ height: window.innerHeight });
-                    uploader.element.find('.bu--panel-content').append(uploader_content);
+                    uploader.element.find('.bu--panel-body').append(uploader_content);
                     uploader.element.find('#bu--files-picker').attr('multiple', uploader.options.multiple).hide();
 
                     if (uploader.options.images_only) {
@@ -459,10 +503,10 @@ var BookletUploader = (function() {
                 };
 
                 var _updateFilesCounter = function() {
-                    var text = helpers.setTextVariables(uploader.locale.files_counter, { files_number: _uploadedFilesNumber() });
+                    var text = utils.setTextVariables(uploader.locale.files_counter, { files_number: _uploadedFilesNumber() });
 
                     if (uploader.options.max_files) {
-                        text += helpers.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
+                        text += utils.setTextVariables(uploader.locale.from_files, { files_number: uploader.options.max_files });
                     }
 
                     uploader.elements.files_counter.html(text);
@@ -484,12 +528,12 @@ var BookletUploader = (function() {
 
                         var file = new File({
                             name: file_data.name,
-                            hash: helpers.uid(),
+                            hash: utils.uid(),
                             size: file_data.size,
                             type: file_data.type
                         });
 
-                        if (uploader.options.images_only && !helpers.inArray(file.type, image_file_types)) {
+                        if (uploader.options.images_only && !utils.inArray(file.type, image_file_types)) {
                             return true; // return true == continue
                         }
 
@@ -508,7 +552,7 @@ var BookletUploader = (function() {
                         uploader.elements.files_list.append(file.element);
                         file.element.find('.bu--progressbar').show();
 
-                        var upload = new Upload(file, file_data, { crop: uploader.options.crop });
+                        var upload = new Upload(file, file_data, { crop: utils.stringToAspectRatio(uploader.options.crop) });
 
                         file.upload = upload;
                         selected_files[file.hash] = file;
@@ -519,7 +563,7 @@ var BookletUploader = (function() {
 
                             file.file_info().done(function(response) {
                                 var file_info = response.data;
-                                var preview = $('<img class="bu--preview-image" src="' + file_info.preview + '" alt="" />');
+                                var preview = $('<img src="' + file_info.preview + '" alt="" />');
 
                                 file.element.find('.bu--file-preview').append(preview);
 
@@ -614,13 +658,14 @@ var BookletUploader = (function() {
                     },
                     setDefault: function() {
                         // Set default transformations
-                        if (editor.options.crop) {
+                        var aspect_ratio = utils.stringToAspectRatio(editor.options.crop);
+                        if (aspect_ratio) {
                             var source_width = editor.file.file_info.image_info.original_width, width = source_width;
                             var source_height = editor.file.file_info.image_info.original_height, height = source_height;
 
                             var x = 0, y = 0;
 
-                            var source_ratio = width / height, target_ratio = editor.options.crop;
+                            var source_ratio = width / height, target_ratio = aspect_ratio;
 
                             if (source_ratio !== target_ratio) {
                                 if (source_ratio > target_ratio) {
@@ -684,9 +729,9 @@ var BookletUploader = (function() {
                         var operation = $.Deferred();
 
                         var cropper = $.Deferred();
-                        cropper.element = $('<img class="bu--preview-image" src="' + editor.file.file_info.original_url + '" alt="" />');
+                        cropper.element = $('<img src="' + editor.file.file_info.original_url + '" alt="" />');
                         cropper.cropper = new Cropper(cropper.element[0], {
-                            aspectRatio: editor.options.crop,
+                            aspectRatio: null,
                             autoCropArea: 1,
                             dragMode: 'move',
                             restore: false,
@@ -700,28 +745,39 @@ var BookletUploader = (function() {
                             toggleDragModeOnDblclick: false,
                             responsive: true,
                             ready: function() {
-                                editor.elements.preview.find('.bu--loader').remove();
+                                editor.elements.cropper.holder.find('.bu--loader').remove();
                             }
                         });
+                        cropper.changeAspectRatio = function(aspect_ratio) {
+                            cropper.cropper.setAspectRatio(aspect_ratio);
+                        };
                         cropper.data = function() {
                             return cropper.cropper.getData();
                         };
                         cropper.open = function() {
-                            editor.elements.preview.empty();
-                            editor.elements.preview.removeClass('bu--editor-preview').addClass('bu--cropper-preview').append(cropper.element);
-                            editor.elements.preview.append('<div class="bu--loader lg"></div>');
-                            editor.elements.effects_menu.hide();
+                            editor.elements.cropper.crop_size_selector.find('.bu--item-current').removeClass('bu--item-current');
 
-                            editor.elements.done.removeClass('bu--panel-done').addClass('bu--cropper-done');
+                            var btn = editor.elements.cropper.crop_size_selector.find('.bu--menu-item').first().addClass('bu--item-current');
+                            var aspect_ratio = utils.stringToAspectRatio(btn.data('aspect-ratio'));
+
+                            cropper.changeAspectRatio(aspect_ratio);
+
+                            editor.elements.cropper.holder.empty().append(['<div class="bu--loader lg"></div>', cropper.element]);
+
+                            editor.elements.container.hide();
+                            editor.elements.cropper.container.show();
+
+                            editor.elements.done.removeClass('bu--panel-done').addClass('bu--cropper-done').html(editor.locale.apply);
                             editor.elements.cancel.removeClass('bu--panel-close').addClass('bu--cropper-cancel');
                         };
                         cropper.close = function() {
                             cropper.cropper.destroy();
 
                             editor.elements.preview.removeClass('bu--cropper-preview').addClass('bu--editor-preview');
-                            editor.elements.effects_menu.show();
+                            editor.elements.cropper.container.hide();
+                            editor.elements.container.show();
 
-                            editor.elements.done.removeClass('bu--cropper-done').addClass('bu--panel-done');
+                            editor.elements.done.removeClass('bu--cropper-done').addClass('bu--panel-done').html(editor.locale.save);
                             editor.elements.cancel.removeClass('bu--cropper-cancel').addClass('bu--panel-close');
 
                             _refreshEditor();
@@ -746,6 +802,16 @@ var BookletUploader = (function() {
 
                         editor.element.on('click', '.bu--cropper-cancel', function() {
                             cropper.reject();
+                        });
+
+                        editor.elements.cropper.crop_size_selector.on('click', '.bu--menu-item', function() {
+                            var button = $(this);
+                            var aspect_ratio = utils.stringToAspectRatio(button.data('aspect-ratio'));
+
+                            cropper.changeAspectRatio(aspect_ratio);
+
+                            editor.elements.cropper.crop_size_selector.find('.bu--item-current').removeClass('bu--item-current');
+                            button.addClass('bu--item-current');
                         });
 
                         return operation;
@@ -788,7 +854,7 @@ var BookletUploader = (function() {
                     editor.element.addClass('bu--editor').css({ height: window.innerHeight });
 
                     var editor_content = BookletUploaderTemplate.getHTML('editor');
-                    editor.element.find('.bu--panel-content').append(editor_content);
+                    editor.element.find('.bu--panel-body').append(editor_content);
 
                     var html = editor.element[0].outerHTML;
                     editor.element = BookletUploaderTemplate.render(html, {
@@ -801,8 +867,14 @@ var BookletUploader = (function() {
 
                     editor.elements = {
                         content: editor.element.find('.bu--panel-content'),
+                        container: editor.element.find('.bu--editor-content'),
                         preview: editor.element.find('.bu--editor-preview'),
-                        effects_menu: editor.element.find('.bu--editor-effects'),
+                        effect_selector: editor.element.find('.bu--editor-content .bu--panel-menu'),
+                        cropper: {
+                            container: editor.element.find('.bu--cropper'),
+                            holder: editor.element.find('.bu--cropper-holder'),
+                            crop_size_selector: editor.element.find('.bu--cropper .bu--panel-menu'),
+                        },
                         done: editor.element.find('.bu--panel-done'),
                         cancel: editor.element.find('.bu--panel-close'),
                     }
@@ -810,14 +882,41 @@ var BookletUploader = (function() {
                     for (var i = 0; i < editor.options.effects.length; i++) {
                         var effect = editor.options.effects[i];
 
-                        var button_html = BookletUploaderTemplate.getHTML('effect_button');
-                        var data = {
+                        var button_html = BookletUploaderTemplate.getHTML('editor_effect_button');
+                        var button = BookletUploaderTemplate.render(button_html, {
                             effect: effect,
                             label: editor.locale.effects[effect]
-                        };
-                        var button = BookletUploaderTemplate.render(button_html, data);
+                        });
 
-                        editor.elements.effects_menu.append(button);
+                        editor.elements.effect_selector.append(button);
+                    }
+
+                    var aspect_ratios = utils.listAspectRatiosFromString(editor.options.crop);
+                    for (var i = 0; i < aspect_ratios.length; i++) {
+                        var aspect_ratio = aspect_ratios[i];
+
+                        var button_html = BookletUploaderTemplate.getHTML('cropper_crop_size_button');
+                        var button = BookletUploaderTemplate.render(button_html, {
+                            aspect_ratio: aspect_ratio,
+                        });
+
+                        var aspect_ratio = utils.stringToAspectRatio(aspect_ratio);
+                        var icon = button.find('.bu--crop-size');
+
+                        var icon_width = '24px';
+                        var icon_height = '24px';
+
+                        if (aspect_ratio && aspect_ratio !== 1) {
+                            if (aspect_ratio > 1) {
+                                icon_height = parseInt(24 / aspect_ratio) + 'px';
+                            } else {
+                                icon_width = parseInt(24 * aspect_ratio) + 'px';
+                            }
+                        }
+
+                        icon.css({ width: icon_width, height: icon_height });
+
+                        editor.elements.cropper.crop_size_selector.append(button);
                     }
                 }
 
@@ -826,20 +925,14 @@ var BookletUploader = (function() {
                         editor.element.css({ height: window.innerHeight });
                     });
 
-                    editor.elements.effects_menu.on('click', '.bu--editor-effect-button', function() {
+                    editor.elements.effect_selector.on('click', '.bu--effect-button', function() {
                         var button = $(this);
                         var transformation = button.data('effect');
 
                         if (operations.hasOwnProperty(transformation)) {
                             var operation = operations[transformation].call();
 
-                            operation.always(function() {
-                                if (transformations.isActive(transformation)) {
-                                    button.addClass('bu--editor-button-active');
-                                } else {
-                                    button.removeClass('bu--editor-button-active');
-                                }
-                            });
+                            operation.always(function() {});
                         }
                     });
 
@@ -869,7 +962,7 @@ var BookletUploader = (function() {
                     // Refresh preview
                     editor.elements.preview.empty().append('<div class="bu--loader lg">');
 
-                    var preview_image = $('<img class="bu--preview-image" src="' + transformations.toUrl() + '" alt="" />').on({
+                    var preview_image = $('<img src="' + transformations.toUrl() + '" alt="" />').on({
                         load: function() {
                             editor.elements.preview.empty().append(preview_image);
                         },
@@ -896,18 +989,8 @@ var BookletUploader = (function() {
                         file_info: file_info
                     });
 
-                    editor.elements.preview.find('.bu--preview-image').attr({ src: editor.file.file_info.url });
+                    editor.elements.preview.find('img').attr({ src: editor.file.file_info.url });
                     transformations.setDefault();
-
-                    editor.elements.effects_menu.find('.bu--editor-effect-button').each(function(i, button) {
-                        var transformation = $(button).data('effect');
-
-                        if (transformations.isActive(transformation)) {
-                            $(button).addClass('bu--editor-button-active');
-                        } else {
-                            $(button).removeClass('bu--editor-button-active');
-                        }
-                    });
 
                     _refreshEditor();
                 }).fail(function() {
@@ -1007,7 +1090,7 @@ var BookletUploader = (function() {
             file.element = BookletUploaderTemplate.render(element_html, {
                 file_hash: file.hash,
                 file_name: file.name,
-                file_size: helpers.sizeToSizeString(file.size),
+                file_size: utils.sizeToSizeString(file.size),
             });
 
             return file;
@@ -1045,7 +1128,7 @@ var BookletUploader = (function() {
 
     return {
         defaults: defaults,
-        helpers: helpers,
+        utils: utils,
         locale: locale,
         openUploader: openUploader,
         openEditor: openEditor,
