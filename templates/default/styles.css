@@ -479,7 +479,10 @@
 
 #bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--editor-content .bu--editor-preview .bu--loader,
 #bu--dialog.bu--editor .bu--panel-body .bu--panel-content.bu--cropper .bu--cropper-holder .bu--loader {
-
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 
