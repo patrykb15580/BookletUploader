@@ -64,7 +64,7 @@ var BookletUploaderTemplate = (function() {
         editor_effect_button: '<li class="bu--menu-item bu--effect-button bu--effect-{{effect}}" title="{{label}}" data-effect="{{effect}}">\
             <i class="bu--icon icon-{{effect}} sm"></i>\
         </li>',
-        cropper_crop_size_button: '<li class="bu--menu-item" data-aspect-ratio="{{aspect_ratio}}">\
+        cropper_crop_size_button: '<li class="bu--menu-item" data-label="{{label}}">\
             <div class="bu--crop-size"></div>\
         </li>'
     };
@@ -245,6 +245,9 @@ var BookletUploader = (function() {
                 multiple: {
                     files_picker: 'Choose files',
                 },
+                crop: {
+                    free: 'Free'
+                },
                 effects: {
                     crop: 'Crop',
                     rotate: 'Rotate',
@@ -283,6 +286,9 @@ var BookletUploader = (function() {
                 from_files: ' z %files_number% plików',
                 multiple: {
                     files_picker: 'Wybierz pliki',
+                },
+                crop: {
+                    free: 'Dowolny'
                 },
                 effects: {
                     crop: 'Kadrowanie',
@@ -758,7 +764,7 @@ var BookletUploader = (function() {
                             editor.elements.cropper.crop_size_selector.find('.bu--item-current').removeClass('bu--item-current');
 
                             var btn = editor.elements.cropper.crop_size_selector.find('.bu--menu-item').first().addClass('bu--item-current');
-                            var aspect_ratio = utils.stringToAspectRatio(btn.data('aspect-ratio'));
+                            var aspect_ratio = utils.stringToAspectRatio(btn.data('label'));
 
                             cropper.changeAspectRatio(aspect_ratio);
 
@@ -806,7 +812,7 @@ var BookletUploader = (function() {
 
                         editor.elements.cropper.crop_size_selector.on('click', '.bu--menu-item', function() {
                             var button = $(this);
-                            var aspect_ratio = utils.stringToAspectRatio(button.data('aspect-ratio'));
+                            var aspect_ratio = utils.stringToAspectRatio(button.data('label'));
 
                             cropper.changeAspectRatio(aspect_ratio);
 
@@ -897,7 +903,7 @@ var BookletUploader = (function() {
 
                         var button_html = BookletUploaderTemplate.getHTML('cropper_crop_size_button');
                         var button = BookletUploaderTemplate.render(button_html, {
-                            aspect_ratio: aspect_ratio,
+                            label: aspect_ratio,
                         });
 
                         var aspect_ratio = utils.stringToAspectRatio(aspect_ratio);
@@ -912,6 +918,10 @@ var BookletUploader = (function() {
                             } else {
                                 icon_width = parseInt(24 * aspect_ratio) + 'px';
                             }
+                        }
+
+                        if (!aspect_ratio) {
+                            button.attr('data-label', editor.locale.crop.free);
                         }
 
                         icon.css({ width: icon_width, height: icon_height });
