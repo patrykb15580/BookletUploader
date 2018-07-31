@@ -138,14 +138,6 @@ class EditorImagick implements Editor
 
         $file_path = $directory . $filename . $extension;
 
-        $profiles = $this->imagick->getImageProfiles('icc', true);
-        $this->imagick->stripImage();
-
-        if (!empty($profiles)) {
-            $this->imagick->profileImage('icc', $profiles['icc']);
-        }
-
         $this->imagick->writeImage($file_path);
-        $this->imagick->destroy();
     }
 }
