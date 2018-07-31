@@ -50,20 +50,12 @@ class Uploader
             return false;
         }
 
-        if ($this->file_object->editable()) {
-            $img = new Imagick($this->file_path);
-            $profiles = $img->getImageProfiles('icc', true);
-            $img->stripImage();
-
-            if (!empty($profiles)) {
-                $img->profileImage('icc', $profiles['icc']);
-            }
-
-            $img->writeImage($this->file_path);
-            $img->destroy();
-        }
-
         chmod($this->file_path, 0644);
+
+        if ($this->file_object->editable()) {
+            shell_exec('convert ' . $this->file_path . ' profile.icm');
+            shell_exec('convert ' . $this->file_path . ' -strip -profile profile.icm ' . $this->file_path);
+        }
 
         $this->updateFileModelData();
 
