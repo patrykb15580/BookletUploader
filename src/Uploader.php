@@ -4,6 +4,7 @@ namespace Booklet\Uploader;
 use Config;
 use FilesUntils;
 use StringUntils;
+use Imagick;
 
 class Uploader
 {
