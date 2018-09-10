@@ -57,7 +57,7 @@ var BookletUploaderTemplate = (function() {
         </div>\
         <div class="bu--panel-content bu--cropper">\
             <div class="bu--cropper-holder">\
-                <img src="http://kreator.fotobum.test/file/1081d4c4e56a1a1ac36914ec84e8d5d6/" alt="" />\
+                <img src="" alt="" />\
             </div>\
             <div class="bu--panel-menu bu--cropper-menu"></div>\
         </div>',
@@ -100,6 +100,60 @@ var BookletUploader = (function() {
 
         return this;
     };
+
+    var routing = {
+        routes: {
+            test: { method: 'GET', path: '/test' },
+            file_show: { method: 'GET', path: '/file/[:hash_id]' },
+            file_create: { method: 'POST', path: '/file/create' },
+            file_update: { method: 'POST', path: '/file/[:hash_id]' },
+        },
+        path: function(name, params = {}) {
+            var route = this.routes[name];
+
+            if (typeof route === 'undefined') {
+                console.error('Generate route:', name, params);
+                throw 'generate undefined route';
+
+                return false;
+            }
+
+            var path = route.path;
+
+            for (var param in params) {
+                path = path.replace('[:' + param + ']', params[param]);
+            }
+
+            return path;
+        },
+        url: function(path_name, path_params = {}) {
+            var env = $('body').data('env');
+            var service_url = (env == 'production') ? 'https://kreator.fotobum.pl' : 'http://kreator.fotobum.test';
+
+            return service_url + this.path(path_name, path_params);
+        },
+        request: function(path_name, path_params = {}, data = {}, options = {}) {
+            var route = this.routes[path_name];
+
+            if (typeof route === 'undefined') {
+                return false;
+            }
+
+            var defaults = {
+                dataType: 'json',
+                cache: false,
+                contentType: false,
+                processData: false
+            }
+            var options = $.extend(defaults, options, {
+                url: this.url(path_name, path_params),
+                type: route.method,
+                data: data,
+            });
+
+            return $.ajax(options);
+        }
+    }
 
     var defaults = {
         locale: 'en',
@@ -948,11 +1002,11 @@ var BookletUploader = (function() {
 
                     editor.element.on('click', '.bu--panel-done', function() {
                         var result = $.Deferred();
-                        var data = { file: { modifiers: transformations.toString() } };
+                        var data = JSON.stringify({ file: { modifiers: transformations.toString() } });
 
-                        $.post('/file/' + editor.file.hash, data, function(response) {
+                        routing.request('file_update', { hash_id: editor.file.hash }, data).done(function(response) {
                             result.resolve(response.data);
-                        }, 'json').fail(function() {
+                        }).fail(function() {
                             result.reject();
                         });
 
@@ -1038,14 +1092,7 @@ var BookletUploader = (function() {
             return data;
         };
         upload.start = function() {
-            upload.request = $.ajax({
-                url: '/file/create',
-                method: 'POST',
-                dataType:'json',
-                data: upload.data(),
-                cache: false,
-                contentType: false,
-                processData: false,
+            upload.request = routing.request('file_create', {}, upload.data(), {
                 async: true,
                 xhr: function() {
                     var xhr = $.ajaxSettings.xhr();
@@ -1106,12 +1153,7 @@ var BookletUploader = (function() {
             return file;
         };
         file.file_info = function() {
-            return $.ajax({
-                type: 'GET',
-                url: '/file/' + file.hash,
-                data: {},
-                dataType: 'json'
-            });
+            return routing.request('file_show', { 'hash_id': file.hash });
         };
         file.abort = function functionName() {
             if (file.hasOwnProperty('upload') && file.upload) {
