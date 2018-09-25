@@ -1,6 +1,8 @@
 <?php
 namespace Booklet\Uploader;
 
+use Imagick;
+
 class ImageExifFixer
 {
     private $file_path;
