@@ -53,8 +53,8 @@ class Uploader
         chmod($this->file_path, 0644);
 
         if ($this->file_object->editable()) {
-            shell_exec('convert ' . $this->file_path . ' profile.icm');
-            shell_exec('convert ' . $this->file_path . ' -strip -profile profile.icm ' . $this->file_path);
+            $exif_fixer = new ImageExifFixer($this->file_path);
+            $exif_fixer->fix();
         }
 
         $this->updateFileModelData();
