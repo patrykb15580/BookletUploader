@@ -64,7 +64,8 @@ trait FileTrait
             'original_width' => $original_width,
             'original_height' => $original_height,
             'width' => $width,
-            'height' => $height
+            'height' => $height,
+            'aspect_ratio' => $width / $height
         ];
     }
 

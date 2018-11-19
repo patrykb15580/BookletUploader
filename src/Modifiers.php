@@ -1,6 +1,8 @@
 <?php
 namespace Booklet\Uploader;
 
+use Booklet\Uploader\Image\ImageUtils;
+
 class Modifiers
 {
     const SEPARATOR = '-/';
@@ -41,6 +43,19 @@ class Modifiers
         if ($y < 0) { $y = 0; }
 
         return self::SEPARATOR . 'crop/' . $width . 'x' . $height . '/' . $x . ',' . $y . '/';
+    }
+
+    public static function cropToProportions(int $source_width, int $source_height, float $target_ratio)
+    {
+        $crop_params = ImageUtils::calcCropParams($source_width, $source_height, $target_ratio);
+
+        if ($crop_params) {
+            list($width, $height, $x, $y) = $crop_params;
+
+            return self::crop($width, $height, $x, $y);
+        }
+
+        return null;
     }
 
     public static function mirror()

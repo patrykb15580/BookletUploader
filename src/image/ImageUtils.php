@@ -27,11 +27,11 @@ class ImageUtils
 
         $image_ratio = $width / $height;
 
-        if (abs($image_ratio - $ratio) > self::PROPORTIONS_TOLLERANCE) {
+        if (abs($image_ratio - $target_ratio) > self::PROPORTIONS_TOLLERANCE) {
             return false;
         }
 
-        return [ $width, $height, $x, $y ];
+        return [ $width, $height, $x, $y, $image_ratio];
     }
 
     public static function calculateProportionallyHeight($new_width, $image_width, $image_height)
